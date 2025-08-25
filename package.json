@@ -1,0 +1,13 @@
+{
+  "name": "hrvanovicm/magacin",
+  "version": "1.0.0",
+  "scripts": {
+    "frontend:install": "npm install",
+    "frontend:build": "npx ng build",
+    "frontend:dev:watcher": "npx ng serve",
+    "frontend:dev:serverUrl": "http://localhost:4200"
+  },
+  "dependencies": {
+    "@angular/cli": "^20.1.6"
+  }
+}

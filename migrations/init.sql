@@ -92,3 +92,32 @@ CREATE TABLE main.shipments
     PRIMARY KEY (report_id),
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
 );
+
+INSERT INTO main.unit_measurements (id, name, is_integer)
+VALUES (1, 'Piece', true),
+       (2, 'Kilogram', false),
+       (3, 'Liter', false);
+
+INSERT INTO main.articles (id, category, name, code, in_stock_amount, in_stock_warning_amount, unit_measure_id, tags)
+VALUES (1, 'RAW_MATERIAL', 'Flour', 'FL001', 100.00, 20.00, 2, 'baking,ingredients'),
+       (2, 'PRODUCT', 'Bread', 'BR001', 50.00, 10.00, 1, 'bakery,fresh'),
+       (3, 'COMMERCIAL', 'Milk', 'ML001', 75.00, 15.00, 3, 'dairy');
+
+INSERT INTO main.reports (id, type, code, date, location_of_publish, signed_by_name)
+VALUES (1, 'RECEIPT', 'REC001', '2024-02-20 10:00:00', 'Warehouse A', 'John Doe'),
+       (2, 'SHIPMENT', 'SHIP001', '2024-02-20 14:00:00', 'Warehouse B', 'Jane Smith');
+
+INSERT INTO main.receipts (report_id, supplier_company_name, supplier_report_code)
+VALUES (1, 'Supplier Co', 'SUP001');
+
+INSERT INTO main.shipments (report_id, receipt_company_name)
+VALUES (2, 'Customer LLC');
+
+INSERT INTO main.report_has_articles (article_id, report_id, amount)
+VALUES (2, 2, 25.00);
+
+INSERT INTO main.article_has_reception (article_id, raw_material_id, amount)
+VALUES (2, 1, 0.5);
+
+INSERT INTO main.report_has_receptions (report_id, article_id, raw_material_id, amount)
+VALUES (1, 2, 1, 50.00);
