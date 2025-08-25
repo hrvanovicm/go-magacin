@@ -11,21 +11,21 @@ CREATE TABLE main.article_has_reception
 (
     article_id      BIGINT                   NOT NULL,
     raw_material_id BIGINT                   NOT NULL,
-    quantity        DECIMAL(10, 2) DEFAULT 0 NOT NULL,
+    amount        DECIMAL(10, 2) DEFAULT 0 NOT NULL,
 
     PRIMARY KEY (article_id, raw_material_id)
 );
 
 CREATE TABLE main.unit_measurements
 (
-    id         BIGINT PRIMARY KEY,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name       VARCHAR(32)          NOT NULL UNIQUE,
     is_integer BOOLEAN DEFAULT TRUE NOT NULL
 );
 
 CREATE TABLE main.articles
 (
-    id                      BIGINT PRIMARY KEY,
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     category                VARCHAR(12)              NOT NULL,
     name                    VARCHAR(64)              NOT NULL UNIQUE,
     code                    VARCHAR(64) UNIQUE,
@@ -40,11 +40,11 @@ CREATE TABLE main.articles
 
 CREATE TABLE main.reports
 (
-    id               BIGINT PRIMARY KEY,
+    id               INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     type             VARCHAR(7) NOT NULL,
     code             VARCHAR(128) UNIQUE,
     date             DATETIME,
-    place_of_publish VARCHAR(128),
+    location_of_publish VARCHAR(128),
     signed_by_name   VARCHAR(128),
 
     CHECK (type IN ('RECEIPT', 'SHIPMENT'))
@@ -53,7 +53,6 @@ CREATE TABLE main.reports
 CREATE TABLE main.receipts
 (
     report_id              BIGINT                NOT NULL,
-    is_supplier_production BOOLEAN DEFAULT FALSE NOT NULL,
     supplier_company_name  VARCHAR(128),
     supplier_report_code   VARCHAR(128),
 
@@ -66,7 +65,7 @@ CREATE TABLE main.report_has_receptions
     report_id       BIGINT                   not null,
     article_id      BIGINT                   not null,
     raw_material_id BIGINT                   not null,
-    quantity        DECIMAL(10, 2) default 0 not null,
+    amount        DECIMAL(10, 2) default 0 not null,
 
     PRIMARY KEY (report_id, article_id, raw_material_id),
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE,
@@ -78,7 +77,7 @@ CREATE TABLE main.report_has_articles
 (
     article_id BIGINT                   NOT NULL,
     report_id  BIGINT                   NOT NULL,
-    quantity   DECIMAL(10, 2) DEFAULT 0 NOT NULL,
+    amount   DECIMAL(10, 2) DEFAULT 0 NOT NULL,
 
     PRIMARY KEY (report_id, article_id),
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE,
