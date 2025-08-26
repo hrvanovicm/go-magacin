@@ -30,7 +30,7 @@ import {MatIconModule} from '@angular/material/icon';
             <span> {{ option.name }} ({{ option.code }}) </span>
             <br>
             <small> {{ option.category | articleCategoryName }} | Na
-              stanju: {{ option.inStockAmount | articleInStock: option.unitMeasure.name }} </small>
+              stanju: {{ option.inStockAmount | articleInStock: option.unitMeasure }} </small>
           </mat-option>
         }
       </mat-autocomplete>
@@ -76,7 +76,7 @@ export class ArticleAutocompleteComponent {
         if (this.excludes.find(e => e.id === o.id)) {
           return false;
         }
-        return o.name.toLowerCase().includes(filterValue) || o.code.String.toLowerCase().includes(filterValue);
+        return o.name.toLowerCase().includes(filterValue) || o.code?.toLowerCase().includes(filterValue);
       })
     )
   }
@@ -157,7 +157,7 @@ export class UnitMeasureAutocompleteComponent {
 })
 export class AmountInputComponent {
   @Input() label!: string;
-  @Input() control!: FormControl<number>;
+  @Input() control!: FormControl<any>;
   @Input() unitMeasure: UnitMeasure | null = null;
 
   isInteger = signal(false);

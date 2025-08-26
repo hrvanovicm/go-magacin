@@ -1,7 +1,6 @@
 package article
 
 import (
-	"database/sql"
 	"hrvanovicm/magacin/internal/unit"
 )
 
@@ -12,25 +11,25 @@ const (
 )
 
 type Article struct {
-	ID                   int64            `db:"id" json:"id"`
-	Name                 string           `db:"name" json:"name"`
-	Code                 sql.NullString   `db:"code" json:"code"`
-	Tags                 string           `db:"tags" json:"tags"`
-	Category             string           `db:"category" json:"category"`
-	InStockAmount        float64          `db:"in_stock_amount" json:"inStockAmount"`
-	InStockWarningAmount float64          `db:"in_stock_warning_amount" json:"inStockWarningAmount"`
-	UnitMeasure          unit.UnitMeasure `db:"unit_measure" json:"unitMeasure"`
+	ID                   int64             `db:"id" json:"id"`
+	Name                 string            `db:"name" json:"name"`
+	Code                 *string           `db:"code" json:"code"`
+	Tags                 string            `db:"tags" json:"tags"`
+	Category             string            `db:"category" json:"category"`
+	InStockAmount        float32           `db:"in_stock_amount" json:"inStockAmount"`
+	InStockWarningAmount float32           `db:"in_stock_warning_amount" json:"inStockWarningAmount"`
+	UnitMeasure          *unit.UnitMeasure `db:"unit_measure" json:"unitMeasure"`
 }
 
 type Summary struct {
-	ID            int64            `db:"id" json:"id"`
-	Name          string           `db:"name" json:"name"`
-	Code          sql.NullString   `db:"code" json:"code"`
-	InStockAmount float64          `db:"in_stock_amount" json:"inStockAmount"`
-	UnitMeasure   unit.UnitMeasure `db:"unit_measure" json:"unitMeasure"`
+	ID            int64             `db:"id" json:"id"`
+	Name          string            `db:"name" json:"name"`
+	Code          *string           `db:"code" json:"code"`
+	InStockAmount float32           `db:"in_stock_amount" json:"inStockAmount"`
+	UnitMeasure   *unit.UnitMeasure `db:"unit_measure" json:"unitMeasure"`
 }
 
 type Reception struct {
 	RawMaterial Summary `db:"raw_material" json:"rawMaterial"`
-	Amount      float64 `db:"amount" json:"amount"`
+	Amount      float32 `db:"amount" json:"amount"`
 }

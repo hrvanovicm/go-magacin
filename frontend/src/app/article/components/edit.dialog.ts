@@ -172,11 +172,11 @@ export class ArticleEditDialog implements AfterContentInit {
   readonly articleService = inject(ArticleService);
 
   readonly basicInfoForm = new FormGroup({
-    category: new FormControl<ArticleCategory | null>(null, [Validators.required]),
+    category: new FormControl<ArticleCategory | undefined>(undefined, [Validators.required]),
     name: new FormControl('', [Validators.required]),
-    code: new FormControl<String>(''),
+    code: new FormControl<string | undefined>(''),
     tags: new FormControl<string[]>([]),
-    unitMeasure: new FormControl<UnitMeasure | null>(null),
+    unitMeasure: new FormControl<UnitMeasure | undefined>(undefined),
     inStockAmount: new FormControl<number>(0, [Validators.required]),
     inStockWarningAmount: new FormControl<number>(0, [Validators.required]),
   })
@@ -187,7 +187,7 @@ export class ArticleEditDialog implements AfterContentInit {
     rawMaterial: new FormControl<Article | null>(null, [Validators.required]),
     amount: new FormControl(0, [Validators.required]),
   })
-
+  
   get currentReceptionRawMaterials() {
     return this.receptionDataSource.data.map(r => r.rawMaterial);
   }
@@ -195,27 +195,22 @@ export class ArticleEditDialog implements AfterContentInit {
   get categoryControl() {
     return this.basicInfoForm.get('category') as FormControl<ArticleCategory | null>;
   }
-
   get unitMeasureControl() {
     return this.basicInfoForm.get('unitMeasure') as FormControl<UnitMeasure | null>;
   }
-
   get inStockAmountControl() {
     return this.basicInfoForm.get('inStockAmount') as FormControl<number>;
   }
-
   get inStockWarningAmountControl() {
     return this.basicInfoForm.get('inStockWarningAmount') as FormControl<number>;
   }
-
   get tagsControl() {
-    return this.basicInfoForm.get('tags') as FormControl;
+    return this.basicInfoForm.get('tags') as FormControl<string[]>;
   }
 
   get receptionRawMaterialControl() {
     return this.receptionCreateForm.get('rawMaterial') as FormControl<Article | null>;
   }
-
   get receptionAmountControl() {
     return this.receptionCreateForm.get('amount') as FormControl<number>;
   }
@@ -225,7 +220,7 @@ export class ArticleEditDialog implements AfterContentInit {
       this.basicInfoForm.setValue({
         name: this.data.article.name,
         category: this.data.article.category as ArticleCategory,
-        code: this.data.article.code.String,
+        code: this.data.article.code,
         unitMeasure: this.data.article.unitMeasure,
         inStockAmount: this.data.article.inStockAmount,
         inStockWarningAmount: this.data.article.inStockWarningAmount,
@@ -267,7 +262,7 @@ export class ArticleEditDialog implements AfterContentInit {
 
     await this.articleService.save(Article.createFrom({
       id: this.data?.article?.id ?? 0,
-      code: {"String": basicFormValue.code as string, "Valid": true},
+      code: basicFormValue.code,
       unitMeasure: basicFormValue.unitMeasure as UnitMeasure,
       inStockAmount: parseFloat(String(basicFormValue.inStockAmount)),
       inStockWarningAmount: parseFloat(String(basicFormValue.inStockWarningAmount)),

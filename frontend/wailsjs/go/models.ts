@@ -3,12 +3,12 @@ export namespace article {
 	export class Article {
 	    id: number;
 	    name: string;
-	    code: sql.NullString;
+	    code?: string;
 	    tags: string;
 	    category: string;
 	    inStockAmount: number;
 	    inStockWarningAmount: number;
-	    unitMeasure: unit.UnitMeasure;
+	    unitMeasure?: unit.UnitMeasure;
 	
 	    static createFrom(source: any = {}) {
 	        return new Article(source);
@@ -18,7 +18,7 @@ export namespace article {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
-	        this.code = this.convertValues(source["code"], sql.NullString);
+	        this.code = source["code"];
 	        this.tags = source["tags"];
 	        this.category = source["category"];
 	        this.inStockAmount = source["inStockAmount"];
@@ -47,9 +47,9 @@ export namespace article {
 	export class Summary {
 	    id: number;
 	    name: string;
-	    code: sql.NullString;
+	    code?: string;
 	    inStockAmount: number;
-	    unitMeasure: unit.UnitMeasure;
+	    unitMeasure?: unit.UnitMeasure;
 	
 	    static createFrom(source: any = {}) {
 	        return new Summary(source);
@@ -59,7 +59,7 @@ export namespace article {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
-	        this.code = this.convertValues(source["code"], sql.NullString);
+	        this.code = source["code"];
 	        this.inStockAmount = source["inStockAmount"];
 	        this.unitMeasure = this.convertValues(source["unitMeasure"], unit.UnitMeasure);
 	    }
@@ -257,25 +257,6 @@ export namespace report {
 		    }
 		    return a;
 		}
-	}
-
-}
-
-export namespace sql {
-	
-	export class NullString {
-	    String: string;
-	    Valid: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new NullString(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.String = source["String"];
-	        this.Valid = source["Valid"];
-	    }
 	}
 
 }

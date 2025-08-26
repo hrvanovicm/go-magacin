@@ -54,6 +54,10 @@ export function GetReportTypes() {
   return window['go']['app']['App']['GetReportTypes']();
 }
 
+export function SaveAllUnitMeasures(arg1) {
+  return window['go']['app']['App']['SaveAllUnitMeasures'](arg1);
+}
+
 export function SaveArticle(arg1) {
   return window['go']['app']['App']['SaveArticle'](arg1);
 }
@@ -68,8 +72,4 @@ export function SaveReport(arg1) {
 
 export function SaveReportArticles(arg1, arg2) {
   return window['go']['app']['App']['SaveReportArticles'](arg1, arg2);
-}
-
-export function SaveUnitMeasure(arg1) {
-  return window['go']['app']['App']['SaveUnitMeasure'](arg1);
 }

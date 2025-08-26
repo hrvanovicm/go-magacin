@@ -1,6 +1,8 @@
 import {inject, Pipe, PipeTransform} from '@angular/core';
 import {ArticleCategory} from './article.service';
 import {DomSanitizer} from '@angular/platform-browser';
+import {unit} from '../../../wailsjs/go/models';
+import UnitMeasure = unit.UnitMeasure;
 
 @Pipe({name: 'articleCategoryName'})
 export class ArticleCategoryPipe implements PipeTransform {
@@ -20,11 +22,15 @@ export class ArticleCategoryPipe implements PipeTransform {
 
 @Pipe({name: 'articleInStock'})
 export class ArticleInStockPipe implements PipeTransform {
-  transform(value: number, unitMeasureName: string): any {
+  transform(value: number, unitMeasure?: UnitMeasure): any {
     if (value === 0) {
       return 'Nema na stanju';
     }
 
-    return `${value.toFixed(2)} (${unitMeasureName})`;
+    if (!unitMeasure) {
+      return value.toFixed(2);
+    }
+
+    return `${value.toFixed(2)} (${unitMeasure!.name ?? ''})`;
   }
 }

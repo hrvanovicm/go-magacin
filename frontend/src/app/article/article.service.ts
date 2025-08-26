@@ -36,7 +36,7 @@ export class ArticleService {
 
       articles = articles.filter(article => {
         return article.name.toLowerCase().includes(search) ||
-          article.code.String.toLowerCase().includes(search) ||
+          article.code?.toLowerCase().includes(search) ||
           (article.tags?.split(",") ?? []).some(t => t.toLowerCase().includes(search));
       })
     }
@@ -67,7 +67,7 @@ export class ArticleService {
             compareValue = a.name.localeCompare(b.name);
             break;
           case 'code':
-            compareValue = (a.code?.String ?? '').localeCompare(b.code?.String ?? '');
+            compareValue = (a.code ?? '').localeCompare(b.code ?? '');
             break;
           case 'category':
             compareValue = a.category.localeCompare(b.category);

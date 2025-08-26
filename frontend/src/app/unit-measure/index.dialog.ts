@@ -129,7 +129,7 @@ export class UnitMeasureIndexDialog implements AfterViewInit {
     })
   }
 
-  saveAll() {
-
+  async saveAll() {
+    await this.unitMeasureService.saveAll(this.dataSource.data);
   }
 }

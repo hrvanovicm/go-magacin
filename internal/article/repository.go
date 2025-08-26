@@ -11,18 +11,24 @@ func GetAllCategories(ctx context.Context, tx *sqlx.Tx) ([]string, error) {
 }
 
 func GetAll(ctx context.Context, tx *sqlx.Tx) ([]Article, error) {
-	var unitMeasurements []Article
+	var articles []Article
 
-	query := `
-				SELECT 
-				    a.id, a.category, a.code, a.name, a.in_stock_amount, a.in_stock_warning_amount, a.tags,
-					um.id "unit_measure.id", um.name "unit_measure.name", um.is_integer "unit_measure.is_integer"
-				FROM articles a
-				LEFT JOIN unit_measurements um ON um.id = a.unit_measure_id
+	query := `SELECT a.id, a.category, a.code, a.name, a.in_stock_amount, a.in_stock_warning_amount, a.tags,
+					 COALESCE(um.id, 0) "unit_measure.id", 
+					 COALESCE(um.name, '') "unit_measure.name", 
+					 COALESCE(um.is_integer, 1) "unit_measure.is_integer"
+			  FROM articles a
+			  LEFT JOIN unit_measurements um ON um.id = a.unit_measure_id
 	`
-	err := tx.SelectContext(ctx, &unitMeasurements, query)
+	err := tx.SelectContext(ctx, &articles, query)
 
-	return unitMeasurements, err
+	for i := range articles {
+		if articles[i].UnitMeasure.ID == 0 {
+			articles[i].UnitMeasure = nil
+		}
+	}
+
+	return articles, err
 }
 
 func GetReceptions(ctx context.Context, tx *sqlx.Tx, id int64) ([]Reception, error) {
@@ -30,11 +36,13 @@ func GetReceptions(ctx context.Context, tx *sqlx.Tx, id int64) ([]Reception, err
 
 	query := `
 				SELECT 
-				    rm.id "raw_material.id", rm.name "raw_material.name", rm.code "raw_material.code",
-					ar.amount
+				    rm.id "raw_material.id", rm.name "raw_material.name", rm.code "raw_material.code", ar.amount,
+				    COALESCE(um.id, 0) "raw_material.unit_measure.id", 
+					COALESCE(um.name, '') "raw_material.unit_measure.name", 
+					COALESCE(um.is_integer, 1) "raw_material.unit_measure.is_integer"
 				FROM article_has_reception ar
-				JOIN articles a ON a.id = ar.article_id
 				JOIN articles rm ON rm.id = ar.raw_material_id
+				JOIN unit_measurements um ON um.id = rm.unit_measure_id
 				WHERE ar.article_id = $1
 	`
 	err := tx.SelectContext(ctx, &unitMeasurements, query, id)
@@ -43,52 +51,24 @@ func GetReceptions(ctx context.Context, tx *sqlx.Tx, id int64) ([]Reception, err
 }
 
 func SaveReceptions(ctx context.Context, tx *sqlx.Tx, articleId int64, receptions []Reception) error {
-	existingReceptions, err := GetReceptions(ctx, tx, articleId)
-	if err != nil {
-		return err
-	}
+	var ids = make([]int64, len(receptions))
 
-	for _, reception := range receptions {
-		query := `SELECT EXISTS(SELECT 1 FROM article_has_reception WHERE article_id = $1 AND raw_material_id = $2)`
+	for i, reception := range receptions {
+		ids[i] = reception.RawMaterial.ID
 
-		var exists bool
-		err := tx.GetContext(ctx, &exists, query, articleId, reception.RawMaterial.ID)
+		query := `INSERT INTO article_has_reception (article_id, raw_material_id, amount) VALUES ($1, $2, $3)
+				  ON CONFLICT (article_id, raw_material_id) DO UPDATE SET amount = EXCLUDED.amount`
+		_, err := tx.ExecContext(ctx, query, articleId, reception.RawMaterial.ID, reception.Amount)
 		if err != nil {
 			return err
 		}
-
-		if exists {
-			query = `UPDATE article_has_reception SET amount = $1 WHERE article_id = $2 AND raw_material_id = $3`
-			_, err := tx.ExecContext(ctx, query, reception.Amount, articleId, reception.RawMaterial.ID)
-			if err != nil {
-				return err
-			}
-		} else {
-			query = `INSERT INTO article_has_reception (article_id, raw_material_id, amount) VALUES ($1, $2, $3)`
-			_, err := tx.ExecContext(ctx, query, articleId, reception.RawMaterial.ID, reception.Amount)
-			if err != nil {
-				return err
-			}
-		}
 	}
 
-	for _, existingReception := range existingReceptions {
-		var exists bool = false
-
-		for _, reception := range receptions {
-			if existingReception.RawMaterial.ID == reception.RawMaterial.ID {
-				exists = true
-				break
-			}
-		}
-
-		if !exists {
-			query := `DELETE FROM article_has_reception WHERE article_id = $1 AND raw_material_id = $2`
-			_, err := tx.ExecContext(ctx, query, articleId, existingReception.RawMaterial.ID)
-			if err != nil {
-				return err
-			}
-		}
+	query, args, err := sqlx.In(`DELETE FROM article_has_reception WHERE article_id = ? AND raw_material_id NOT IN (?)`, articleId, ids)
+	query = tx.Rebind(query)
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -115,7 +95,6 @@ func Save(ctx context.Context, tx *sqlx.Tx, product *Article) error {
 		}
 
 		product.ID = id
-		print(product.ID)
 	} else {
 		query := `UPDATE articles SET 
                     category = $1, code = $2, name = $3, in_stock_amount = $4, in_stock_warning_amount = $5, unit_measure_id = $6, tags = $7

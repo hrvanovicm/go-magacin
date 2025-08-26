@@ -30,6 +30,8 @@ export function GetReportArticles(arg1:number):Promise<Array<report.Article>>;
 
 export function GetReportTypes():Promise<Array<string>>;
 
+export function SaveAllUnitMeasures(arg1:Array<unit.UnitMeasure>):Promise<void>;
+
 export function SaveArticle(arg1:article.Article):Promise<void>;
 
 export function SaveArticleReceptions(arg1:number,arg2:Array<article.Reception>):Promise<void>;
@@ -37,5 +39,3 @@ export function SaveArticleReceptions(arg1:number,arg2:Array<article.Reception>)
 export function SaveReport(arg1:report.Report):Promise<void>;
 
 export function SaveReportArticles(arg1:number,arg2:Array<report.Article>):Promise<void>;
-
-export function SaveUnitMeasure(arg1:unit.UnitMeasure):Promise<void>;

@@ -65,13 +65,17 @@ import Article = article.Article;
         <th mat-header-cell *matHeaderCellDef> Rb. </th>
         <td mat-cell *matCellDef="let i = index"> {{ i + 1 }}.</td>
       </ng-container>
+      <ng-container matColumnDef="icon">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let i = index"> <mat-icon class="text-xl text-gray-600">sell</mat-icon></td>
+      </ng-container>
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef mat-sort-header> Naziv </th>
         <td mat-cell *matCellDef="let element"> <strong> {{ element.name }} </strong></td>
       </ng-container>
       <ng-container matColumnDef="code">
         <th mat-header-cell *matHeaderCellDef mat-sort-header> Šifra </th>
-        <td mat-cell *matCellDef="let element"> {{ element.code.String }}</td>
+        <td mat-cell *matCellDef="let element"> {{ element.code }}</td>
       </ng-container>
       <ng-container matColumnDef="category">
         <th mat-header-cell *matHeaderCellDef mat-sort-header> Tip </th>
@@ -83,7 +87,7 @@ import Article = article.Article;
       </ng-container>
       <ng-container matColumnDef="inStockAmount">
         <th mat-header-cell *matHeaderCellDef mat-sort-header> Na stanju </th>
-        <td mat-cell *matCellDef="let element"><span [innerHTML]="element.inStockAmount | articleInStock: element.unitMeasure?.name"></span></td>
+        <td mat-cell *matCellDef="let element"><span [innerHTML]="element.inStockAmount | articleInStock: element.unitMeasure"></span></td>
       </ng-container>
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openUpdateDialog(row)"></tr>
@@ -104,7 +108,7 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
   readonly articleService = inject(ArticleService);
   readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns: string[] = ['position', 'name', 'code', 'category', 'tags', 'inStockAmount'];
+  readonly displayedColumns: string[] = ['position', 'icon', 'name', 'code', 'category', 'tags', 'inStockAmount'];
   readonly dataSource = new MatTableDataSource<Article>([]);
   readonly filterForm = new FormGroup({
     search: new FormControl<string | null>(null),
