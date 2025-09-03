@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func (a *App) GetAllUnitMeasurements() ([]unit.UnitMeasure, error) {
+func (a *WailsApp) GetAllUnitMeasurements() ([]unit.UnitMeasure, error) {
 	var result []unit.UnitMeasure
 
 	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
@@ -19,7 +19,7 @@ func (a *App) GetAllUnitMeasurements() ([]unit.UnitMeasure, error) {
 	return result, err
 }
 
-func (a *App) SaveAllUnitMeasures(ums []unit.UnitMeasure) error {
+func (a *WailsApp) SaveAllUnitMeasures(ums []unit.UnitMeasure) error {
 	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
 		existings, err := unit.GetAll(ctx, tx)
 		if err != nil {
@@ -55,7 +55,7 @@ func (a *App) SaveAllUnitMeasures(ums []unit.UnitMeasure) error {
 	})
 }
 
-func (a *App) DeleteUnitMeasure(id int64) error {
+func (a *WailsApp) DeleteUnitMeasure(id int64) error {
 	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
 		return unit.Delete(ctx, tx, id)
 	})

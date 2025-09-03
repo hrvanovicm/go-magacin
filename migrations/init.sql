@@ -1,5 +1,6 @@
-DROP TABLE IF EXISTS main.article_has_reception;
-DROP TABLE IF EXISTS main.report_has_receptions;
+DROP TABLE IF EXISTS main.in_house_companies;
+DROP TABLE IF EXISTS main.article_has_recipes;
+DROP TABLE IF EXISTS main.report_has_recipes;
 DROP TABLE IF EXISTS main.report_has_articles;
 DROP TABLE IF EXISTS main.receipts;
 DROP TABLE IF EXISTS main.shipments;
@@ -7,7 +8,12 @@ DROP TABLE IF EXISTS main.reports;
 DROP TABLE IF EXISTS main.articles;
 DROP TABLE IF EXISTS main.unit_measurements;
 
-CREATE TABLE main.article_has_reception
+CREATE TABLE main.in_house_companies
+(
+    name VARCHAR(128) PRIMARY KEY NOT NULL
+);
+
+CREATE TABLE main.article_has_recipes
 (
     article_id      INTEGER                  NOT NULL,
     raw_material_id INTEGER                  NOT NULL,
@@ -40,12 +46,12 @@ CREATE TABLE main.articles
 
 CREATE TABLE main.reports
 (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    type                VARCHAR(7)                        NOT NULL,
-    code                VARCHAR(128) UNIQUE,
-    date                DATETIME,
-    location_of_publish VARCHAR(128),
-    signed_by_name      VARCHAR(128),
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    type               VARCHAR(7)                        NOT NULL,
+    code               VARCHAR(128) UNIQUE,
+    signed_at          DATETIME,
+    signed_at_location VARCHAR(128),
+    signed_by          VARCHAR(128),
 
     CHECK (type IN ('RECEIPT', 'SHIPMENT'))
 );
@@ -60,7 +66,7 @@ CREATE TABLE main.receipts
     FOREIGN KEY (report_id) REFERENCES reports (id) ON DELETE CASCADE
 );
 
-CREATE TABLE main.report_has_receptions
+CREATE TABLE main.report_has_recipes
 (
     report_id       INTEGER                  not null,
     article_id      INTEGER                  not null,

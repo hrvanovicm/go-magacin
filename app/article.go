@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func (a *App) GetAllArticles() ([]article.Article, error) {
+func (a *WailsApp) GetAllArticles() ([]article.Article, error) {
 	var result []article.Article
 
 	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
@@ -19,31 +19,30 @@ func (a *App) GetAllArticles() ([]article.Article, error) {
 	return result, err
 }
 
-func (a *App) GetAllReceptionsByArticleID(id int64) ([]article.Reception, error) {
-	var result []article.Reception
+func (a *WailsApp) GetAllReceptionsByArticleID(id int64) ([]article.Recipe, error) {
+	var result []article.Recipe
 
 	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
 		var err error
-		result, err = article.GetReceptions(ctx, tx, id)
+		result, err = article.GetRecipes(ctx, tx, id)
 		return err
 	})
 
 	return result, err
 }
 
-func (a *App) SaveArticleReceptions(id int64, receptions []article.Reception) error {
+func (a *WailsApp) SaveArticle(art *article.Article, receptions []article.Recipe) error {
 	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		return article.SaveReceptions(ctx, tx, id, receptions)
+		err := article.Save(ctx, tx, art)
+		if err != nil {
+			return err
+		}
+
+		return article.SaveRecipes(ctx, tx, art.ID, receptions)
 	})
 }
 
-func (a *App) SaveArticle(art *article.Article) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		return article.Save(ctx, tx, art)
-	})
-}
-
-func (a *App) DeleteArticle(id int64) error {
+func (a *WailsApp) DeleteArticle(id int64) error {
 	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
 		return article.Delete(ctx, tx, id)
 	})

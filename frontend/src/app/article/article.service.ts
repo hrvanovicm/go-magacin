@@ -1,14 +1,9 @@
 import {Injectable} from '@angular/core';
-import {
-  GetAllArticles,
-  GetAllReceptionsByArticleID,
-  SaveArticle,
-  SaveArticleReceptions
-} from '../../../wailsjs/go/app/App';
 import {article} from '../../../wailsjs/go/models';
 
 import Article = article.Article;
-import Reception = article.Reception;
+import Recipe = article.Recipe;
+import {GetAllArticles, GetAllReceptionsByArticleID, SaveArticle} from '../../../wailsjs/go/app/WailsApp';
 
 export enum ArticleCategory {
   PRODUCT = 'PRODUCT',
@@ -86,16 +81,12 @@ export class ArticleService {
     return articles;
   }
 
-  async getReceptions(id: number): Promise<Reception[]> {
+  async getReceptions(id: number): Promise<Recipe[]> {
     return await GetAllReceptionsByArticleID(id);
   }
 
-  async saveReceptions(id: number, receptions: Reception[]) {
-    return await SaveArticleReceptions(id, receptions);
-  }
-
-  async save(request: Article) {
-    return await SaveArticle(request);
+  async save(request: Article, receptions: Recipe[]) {
+    return await SaveArticle(request, receptions);
   }
 
   async delete(request: Article) {

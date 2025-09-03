@@ -19,11 +19,11 @@ import {UnitMeasureIndexDialog} from '../unit-measure/index.dialog';
       <span>Magacin</span>
       <span class="flex-1 basis-auto"></span>
       <button matButton [routerLink]="['/products']">Roba</button>
-      <button matButton>Ulaz / Izlaz</button>
+      <button matButton [routerLink]="['/reports']">Izvještaji</button>
       <button matButton (click)="openUnitMeasureDialog()">Mjerne jedinice</button>
     </mat-toolbar>
 
-    <main>
+    <main class="w-full h-full overflow-hidden">
       <mat-divider></mat-divider>
       <router-outlet></router-outlet>
     </main>

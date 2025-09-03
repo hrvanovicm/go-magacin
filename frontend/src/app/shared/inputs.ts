@@ -1,5 +1,15 @@
-import {AfterViewInit, Component, ElementRef, inject, Input, signal, ViewChild} from '@angular/core';
-import {article, unit} from '../../../wailsjs/go/models';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  inject,
+  Input,
+  Output,
+  signal,
+  ViewChild
+} from '@angular/core';
+import {article, company, unit} from '../../../wailsjs/go/models';
 import {FormControl, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {MatFormField, MatInputModule} from '@angular/material/input';
 import {MatAutocompleteModule} from '@angular/material/autocomplete';
@@ -13,6 +23,9 @@ import {LiveAnnouncer} from '@angular/cdk/a11y';
 import {MatChipInputEvent, MatChipsModule} from '@angular/material/chips';
 import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
+import {ReportService} from '../report/report.service';
+import Company = company.Company;
+import {map, startWith} from 'rxjs';
 
 @Component({
   selector: 'app-article-autocomplete [label] [control]',
@@ -142,7 +155,7 @@ export class UnitMeasureAutocompleteComponent {
 }
 
 @Component({
-  selector: 'app-amount-input [label] [control]',
+  selector: 'app-amount-input [label]',
   template: `
     <mat-form-field class="w-full">
       <mat-label>{{ label }}</mat-label>
@@ -157,14 +170,21 @@ export class UnitMeasureAutocompleteComponent {
 })
 export class AmountInputComponent {
   @Input() label!: string;
-  @Input() control!: FormControl<any>;
+  @Input() initValue?: number;
+  @Input() control: FormControl<any> = new FormControl(0);
   @Input() unitMeasure: UnitMeasure | null = null;
+
+  @Output() onValueChange = new EventEmitter<number>();
 
   isInteger = signal(false);
 
-  ngAfterContentInit() {
+  ngAfterViewInit() {
     if (this.unitMeasure && this.unitMeasure.isInteger) {
       this.isInteger.set(this.unitMeasure.isInteger);
+    }
+
+    if(this.initValue) {
+      this.control.setValue(this.initValue);
     }
   }
 
@@ -185,6 +205,7 @@ export class AmountInputComponent {
       }
     }
 
+    this.onValueChange.emit(this.control.value);
     return true;
   }
 }
@@ -253,3 +274,181 @@ export class TagsInputComponent implements AfterViewInit {
     event.chipInput!.clear();
   }
 }
+
+@Component({
+  selector: 'app-company-autocomplete',
+  template: `
+    <mat-form-field class="w-full">
+      <mat-label>{{ label }}</mat-label>
+      <input #input type="text" matInput
+             [formControl]="control"
+             [matAutocomplete]="auto"
+             (input)="filter()"
+             (focus)="load()">
+      <mat-autocomplete requireSelection #auto="matAutocomplete">
+        @for (option of filteredOptions(); track option) {
+          <mat-option [value]="option.name">
+            <span> {{ option.name }} </span>
+            @if (option.inHouseProduction) {
+              <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+            }
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+  `,
+  imports: [
+    MatChipsModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    ReactiveFormsModule,
+  ],
+})
+export class CompanyAutocompleteComponent {
+  @ViewChild('input') input!: ElementRef<HTMLInputElement>;
+
+  readonly reportService = inject(ReportService);
+
+  @Input() label!: string;
+  @Input() control!: FormControl<string>;
+
+  allOptions: Company[] = [];
+
+  readonly filteredOptions = signal<Company[]>([]);
+
+  async load() {
+    if (this.allOptions.length == 0) {
+      this.allOptions = await this.reportService.getAllCompanies();
+    }
+
+    this.filter();
+  }
+
+  filter(): void {
+    const filterValue = this.input.nativeElement.value.toLowerCase();
+    this.filteredOptions.set(
+      this.allOptions.filter(o => {
+        return o.name!.toLowerCase().includes(filterValue);
+      })
+    )
+  }
+}
+
+@Component({
+  selector: 'app-user-autocomplete',
+  template: `
+    <mat-form-field class="w-full">
+      <mat-label>{{ label }}</mat-label>
+      <input #input type="text" matInput
+             [formControl]="control"
+             [matAutocomplete]="auto"
+             (input)="filter()"
+             (focus)="load()">
+      <mat-autocomplete requireSelection #auto="matAutocomplete">
+        @for (option of filteredOptions(); track option) {
+          <mat-option [value]="option">
+            <span> {{ option }} </span>
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+  `,
+  imports: [
+    FormsModule,
+    MatChipsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    ReactiveFormsModule,
+  ],
+})
+export class UserAutocompleteComponent {
+  @ViewChild('input') input!: ElementRef<HTMLInputElement>;
+
+  readonly reportService = inject(ReportService);
+
+  @Input() label!: string;
+  @Input() control!: FormControl<string>;
+
+  allOptions: string[] = [];
+
+  readonly filteredOptions = signal<string[]>([]);
+
+  async load() {
+    if (this.allOptions.length == 0) {
+      this.allOptions = await this.reportService.getAllUsers();
+    }
+
+    this.filter();
+  }
+
+  filter(): void {
+    const filterValue = this.input.nativeElement.value.toLowerCase();
+    this.filteredOptions.set(
+      this.allOptions.filter(o => {
+        return o.toLowerCase().includes(filterValue);
+      })
+    )
+  }
+}
+
+@Component({
+  selector: 'app-location-autocomplete',
+  template: `
+    <mat-form-field class="w-full">
+      <mat-label>{{ label }}</mat-label>
+      <input #input type="text" matInput
+             [formControl]="control"
+             [matAutocomplete]="auto"
+             (input)="filter()"
+             (focus)="load()">
+      <mat-autocomplete requireSelection #auto="matAutocomplete">
+        @for (option of filteredOptions(); track option) {
+          <mat-option [value]="option">
+            <span> {{ option }} </span>
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+  `,
+  imports: [
+    FormsModule,
+    MatChipsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    ReactiveFormsModule,
+  ],
+})
+export class LocationAutocompleteComponent {
+  @ViewChild('input') input!: ElementRef<HTMLInputElement>;
+
+  readonly reportService = inject(ReportService);
+
+  @Input() label!: string;
+  @Input() control!: FormControl<string>;
+
+  allOptions: string[] = [];
+
+  readonly filteredOptions = signal<string[]>([]);
+
+  async load() {
+    if (this.allOptions.length == 0) {
+      this.allOptions = await this.reportService.getAllLocations();
+    }
+
+    this.filter();
+  }
+
+  filter(): void {
+    const filterValue = this.input.nativeElement.value.toLowerCase();
+    this.filteredOptions.set(
+      this.allOptions.filter(o => {
+        return o.toLowerCase().includes(filterValue);
+      })
+    )
+  }
+}
+

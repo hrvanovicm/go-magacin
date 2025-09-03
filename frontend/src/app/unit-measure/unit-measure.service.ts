@@ -1,7 +1,7 @@
 import {Injectable, signal} from '@angular/core';
-import {GetAllUnitMeasurements, SaveAllUnitMeasures} from '../../../wailsjs/go/app/App';
 import {unit} from '../../../wailsjs/go/models';
 import UnitMeasure = unit.UnitMeasure;
+import {GetAllUnitMeasurements, SaveAllUnitMeasures} from '../../../wailsjs/go/app/WailsApp';
 
 @Injectable()
 export class UnitMeasureService {

@@ -14,7 +14,7 @@ import (
 var assets embed.FS
 
 func main() {
-	app := app.NewApp()
+	wailsApp := app.NewApp()
 
 	err := wails.Run(&options.App{
 		Title:             "Magacin",
@@ -28,17 +28,16 @@ func main() {
 		StartHidden:       false,
 		HideWindowOnClose: false,
 		Assets:            assets,
-		OnStartup:         app.Startup,
-		OnShutdown:        app.Shutdown,
-		Bind: []interface{}{
-			app,
-		},
+		OnStartup:         wailsApp.Startup,
+		OnShutdown:        wailsApp.Shutdown,
+		Bind:              []interface{}{wailsApp},
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,
 			DisableWindowIcon:    false,
 		},
 	})
+
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -8,7 +8,7 @@ import {MatButton, MatIconButton} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import {ArticleCategory, ArticleCategoryValues, ArticleParams, ArticleService} from './article.service';
 import {MatDialog} from '@angular/material/dialog';
-import {ArticleEditDialog, ArticleEditDialogData} from './components/edit.dialog';
+import {ArticleEditDialog, ArticleEditDialogResult} from './components/edit.dialog';
 import {MatChipsModule} from '@angular/material/chips';
 import {MatSort, MatSortModule} from '@angular/material/sort';
 import {debounceTime} from 'rxjs';
@@ -60,40 +60,45 @@ import Article = article.Article;
       </mat-toolbar-row>
     </mat-toolbar>
 
-    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" matSort>
-      <ng-container matColumnDef="position">
-        <th mat-header-cell *matHeaderCellDef> Rb. </th>
-        <td mat-cell *matCellDef="let i = index"> {{ i + 1 }}.</td>
-      </ng-container>
-      <ng-container matColumnDef="icon">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let i = index"> <mat-icon class="text-xl text-gray-600">sell</mat-icon></td>
-      </ng-container>
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Naziv </th>
-        <td mat-cell *matCellDef="let element"> <strong> {{ element.name }} </strong></td>
-      </ng-container>
-      <ng-container matColumnDef="code">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Šifra </th>
-        <td mat-cell *matCellDef="let element"> {{ element.code }}</td>
-      </ng-container>
-      <ng-container matColumnDef="category">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Tip </th>
-        <td mat-cell *matCellDef="let element"> {{ element.category | articleCategoryName }}</td>
-      </ng-container>
-      <ng-container matColumnDef="tags">
-        <th mat-header-cell *matHeaderCellDef> Oznake </th>
-        <td mat-cell *matCellDef="let element"> {{ element.tags.split(',').join(', ') }}</td>
-      </ng-container>
-      <ng-container matColumnDef="inStockAmount">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header> Na stanju </th>
-        <td mat-cell *matCellDef="let element"><span [innerHTML]="element.inStockAmount | articleInStock: element.unitMeasure"></span></td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openUpdateDialog(row)"></tr>
-    </table>
+    <div class="w-full h-full overflow-y-scroll">
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" matSort>
+        <ng-container matColumnDef="position">
+          <th mat-header-cell *matHeaderCellDef> Rb. </th>
+          <td mat-cell *matCellDef="let i = index"> {{ i + 1 }}.</td>
+        </ng-container>
+        <ng-container matColumnDef="icon">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let i = index"> <mat-icon class="text-xl text-gray-600">sell</mat-icon></td>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Naziv </th>
+          <td mat-cell *matCellDef="let element"> <strong> {{ element.name }} </strong></td>
+        </ng-container>
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Šifra </th>
+          <td mat-cell *matCellDef="let element"> {{ element.code }}</td>
+        </ng-container>
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Tip </th>
+          <td mat-cell *matCellDef="let element"> {{ element.category | articleCategoryName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="tags">
+          <th mat-header-cell *matHeaderCellDef> Oznake </th>
+          <td mat-cell *matCellDef="let element"> {{ element.tags.split(',').join(', ') }}</td>
+        </ng-container>
+        <ng-container matColumnDef="inStockAmount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> Na stanju </th>
+          <td mat-cell *matCellDef="let element"><span [innerHTML]="element.inStockAmount | articleInStock: element.unitMeasure"></span></td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openUpdateDialog(row)"></tr>
+      </table>
+    </div>
   `,
   styles: `
+    :root {
+      @apply h-full w-full overflow-hidden;
+    }
     tr {
       cursor: pointer !important;
     }
@@ -131,11 +136,12 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
   openCreateDialog() {
     const dialogRef = this.dialog.open(ArticleEditDialog, {
       width: '600px',
-      height: '650px',
+      height: '80vh',
+      maxHeight: '1200px',
       maxWidth: '600px',
     });
 
-    dialogRef.afterClosed().subscribe(async (result?: ArticleEditDialogData) => {
+    dialogRef.afterClosed().subscribe(async (result?: ArticleEditDialogResult) => {
       if(result) {
         let data = this.dataSource.data;
         data.push(result.article!);
@@ -150,7 +156,8 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
 
     const dialogRef = this.dialog.open(ArticleEditDialog, {
       width: '600px',
-      height: '650px',
+      height: '80vh',
+      maxHeight: '1200px',
       maxWidth: '600px',
       data: {
         article: article,
@@ -158,7 +165,7 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(async (result?: ArticleEditDialogData) => {
+    dialogRef.afterClosed().subscribe(async (result?: ArticleEditDialogResult) => {
       if(result) {
         let data = this.dataSource.data;
         data.map(a => {
@@ -185,11 +192,6 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
 
   async load() {
     let filterFormValue = this.filterForm.getRawValue();
-    let sortValue = {
-      direction: this.sort.direction ?? "asc",
-      active: this.sort.active
-    }
-
     let params: Partial<ArticleParams> = {};
 
     if(filterFormValue.search) {
@@ -200,9 +202,9 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
       params.lowInStock = true;
     }
 
-    if(sortValue.active) {
-      params.sortBy = sortValue.active;
-      params.sortDirection = sortValue.direction;
+    if(this.sort.active) {
+      params.sortBy = this.sort.active;
+      params.sortDirection = this.sort.direction ?? "asc";
     }
 
     params.categories = filterFormValue.categories ?? [];

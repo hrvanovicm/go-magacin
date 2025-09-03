@@ -44,87 +44,12 @@ export namespace article {
 		    return a;
 		}
 	}
-	export class Summary {
-	    id: number;
-	    name: string;
-	    code?: string;
-	    inStockAmount: number;
-	    unitMeasure?: unit.UnitMeasure;
-	
-	    static createFrom(source: any = {}) {
-	        return new Summary(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.code = source["code"];
-	        this.inStockAmount = source["inStockAmount"];
-	        this.unitMeasure = this.convertValues(source["unitMeasure"], unit.UnitMeasure);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class Reception {
-	    rawMaterial: Summary;
-	    amount: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new Reception(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.rawMaterial = this.convertValues(source["rawMaterial"], Summary);
-	        this.amount = source["amount"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
-export namespace report {
-	
-	export class ArticleReceipt {
+	export class Recipe {
 	    rawMaterial: Article;
 	    amount: number;
 	
 	    static createFrom(source: any = {}) {
-	        return new ArticleReceipt(source);
+	        return new Recipe(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -151,20 +76,44 @@ export namespace report {
 		    return a;
 		}
 	}
-	export class Article {
-	    article: article.Article;
-	    amount: number;
-	    usedReceipts: ArticleReceipt[];
+
+}
+
+export namespace company {
+	
+	export class Company {
+	    name?: string;
+	    inHouseProduction: boolean;
 	
 	    static createFrom(source: any = {}) {
-	        return new Article(source);
+	        return new Company(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.article = this.convertValues(source["article"], article.Article);
-	        this.amount = source["amount"];
-	        this.usedReceipts = this.convertValues(source["usedReceipts"], ArticleReceipt);
+	        this.name = source["name"];
+	        this.inHouseProduction = source["inHouseProduction"];
+	    }
+	}
+
+}
+
+export namespace report {
+	
+	export class Receipt {
+	    isSupplierProducton?: boolean;
+	    supplierCompany: company.Company;
+	    supplierReportCode?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Receipt(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.isSupplierProducton = source["isSupplierProducton"];
+	        this.supplierCompany = this.convertValues(source["supplierCompany"], company.Company);
+	        this.supplierReportCode = source["supplierReportCode"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -185,25 +134,8 @@ export namespace report {
 		    return a;
 		}
 	}
-	
-	export class Receipt {
-	    isSupplierProducton: boolean;
-	    supplierCompanyName: string;
-	    supplierReportCode: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new Receipt(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.isSupplierProducton = source["isSupplierProducton"];
-	        this.supplierCompanyName = source["supplierCompanyName"];
-	        this.supplierReportCode = source["supplierReportCode"];
-	    }
-	}
 	export class Shipment {
-	    receiptCompanyName: string;
+	    receiptCompany: company.Company;
 	
 	    static createFrom(source: any = {}) {
 	        return new Shipment(source);
@@ -211,16 +143,34 @@ export namespace report {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.receiptCompanyName = source["receiptCompanyName"];
+	        this.receiptCompany = this.convertValues(source["receiptCompany"], company.Company);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class Report {
 	    id: number;
 	    type: string;
-	    code: string;
-	    date: string;
-	    placeOfPublish: string;
-	    signedByName: string;
+	    code?: string;
+	    signedAt?: string;
+	    signedAtLocation?: string;
+	    signedBy?: string;
 	    receipt: Receipt;
 	    shipment: Shipment;
 	
@@ -233,9 +183,9 @@ export namespace report {
 	        this.id = source["id"];
 	        this.type = source["type"];
 	        this.code = source["code"];
-	        this.date = source["date"];
-	        this.placeOfPublish = source["placeOfPublish"];
-	        this.signedByName = source["signedByName"];
+	        this.signedAt = source["signedAt"];
+	        this.signedAtLocation = source["signedAtLocation"];
+	        this.signedBy = source["signedBy"];
 	        this.receipt = this.convertValues(source["receipt"], Receipt);
 	        this.shipment = this.convertValues(source["shipment"], Shipment);
 	    }
@@ -258,6 +208,73 @@ export namespace report {
 		    return a;
 		}
 	}
+	export class ReportRecipe {
+	    rawMaterial: article.Article;
+	    amount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReportRecipe(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rawMaterial = this.convertValues(source["rawMaterial"], article.Article);
+	        this.amount = source["amount"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ReportArticle {
+	    article: article.Article;
+	    amount: number;
+	    usedRecipes: ReportRecipe[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ReportArticle(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.article = this.convertValues(source["article"], article.Article);
+	        this.amount = source["amount"];
+	        this.usedRecipes = this.convertValues(source["usedRecipes"], ReportRecipe);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 
 }
 

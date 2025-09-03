@@ -7,7 +7,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func (a *App) GetAllReports() ([]report.Report, error) {
+func (a *WailsApp) GetReportTypes() []report.ReportType {
+	return report.GetAllTypes()
+}
+
+func (a *WailsApp) GetAllReports() ([]report.Report, error) {
 	var result []report.Report
 
 	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
@@ -19,11 +23,7 @@ func (a *App) GetAllReports() ([]report.Report, error) {
 	return result, err
 }
 
-func (a *App) GetReportTypes() []string {
-	return report.GetAllTypes()
-}
-
-func (a *App) GetAllReportPublishLocations() ([]string, error) {
+func (a *WailsApp) GetAllReportPublishLocations() ([]string, error) {
 	var result []string
 
 	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
@@ -35,31 +35,7 @@ func (a *App) GetAllReportPublishLocations() ([]string, error) {
 	return result, err
 }
 
-func (a *App) GetAllReportSignUsers() ([]string, error) {
-	var result []string
-
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = report.GetAllSignUsers(ctx, tx)
-		return err
-	})
-
-	return result, err
-}
-
-func (a *App) GetAllReportCompanies() ([]string, error) {
-	var result []string
-
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = report.GetAllCompanies(ctx, tx)
-		return err
-	})
-
-	return result, err
-}
-
-func (a *App) GetNextReportCode() (string, error) {
+func (a *WailsApp) GetNextReportCode() (string, error) {
 	var result string
 
 	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
@@ -71,8 +47,8 @@ func (a *App) GetNextReportCode() (string, error) {
 	return result, err
 }
 
-func (a *App) GetReportArticles(id int64) ([]report.Article, error) {
-	var result []report.Article
+func (a *WailsApp) GetReportArticles(id int64) ([]report.ReportArticle, error) {
+	var result []report.ReportArticle
 
 	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
 		var err error
@@ -83,19 +59,18 @@ func (a *App) GetReportArticles(id int64) ([]report.Article, error) {
 	return result, err
 }
 
-func (a *App) SaveReportArticles(id int64, articles []report.Article) error {
+func (a *WailsApp) SaveReport(rep *report.Report, articles []report.ReportArticle) error {
 	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		return report.SaveArticles(ctx, tx, id, articles)
+		err := report.Save(ctx, tx, rep)
+		if err != nil {
+			return err
+		}
+
+		return report.SaveArticles(ctx, tx, rep.ID, articles)
 	})
 }
 
-func (a *App) SaveReport(rep *report.Report) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		return report.Save(ctx, tx, rep)
-	})
-}
-
-func (a *App) DeleteReport(id int64) error {
+func (a *WailsApp) DeleteReport(id int64) error {
 	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
 		return report.Delete(ctx, tx, id)
 	})

@@ -23,7 +23,7 @@ html {
 body {
   // Default the application to a light color theme. This can be changed to
   // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
+  // user's system company.
   color-scheme: light;
 
   // Set a default background, font and text colors for the application using
@@ -38,7 +38,7 @@ body {
 }
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; height: 100%; overflow: hidden; }
 
 // Fix: material form field are to large.
 mat-form-field {

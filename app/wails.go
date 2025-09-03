@@ -12,26 +12,26 @@ const (
 	REQUEST_TIMEOUT = 5 * time.Second
 )
 
-type App struct {
+type WailsApp struct {
 	db  *database.DB
 	ctx context.Context
 }
 
-func NewApp() *App {
-	return &App{}
+func NewApp() *WailsApp {
+	return &WailsApp{}
 }
 
-func (a *App) Startup(ctx context.Context) {
+func (a *WailsApp) Startup(ctx context.Context) {
 	a.ctx = ctx
 	a.db = database.NewDB("./storage/magacin.db")
 	a.db.Connect()
 }
 
-func (a *App) Shutdown(ctx context.Context) {
+func (a *WailsApp) Shutdown(ctx context.Context) {
 
 }
 
-func (a *App) runWithTx(fn func(ctx context.Context, tx *sqlx.Tx) error) error {
+func (a *WailsApp) runWithTx(fn func(ctx context.Context, tx *sqlx.Tx) error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), REQUEST_TIMEOUT)
 	defer cancel()
 
