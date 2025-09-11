@@ -20,6 +20,7 @@ type Article struct {
 	InStockWarningAmount float32           `db:"in_stock_warning_amount" json:"inStockWarningAmount"`
 	UnitMeasure          *unit.UnitMeasure `db:"unit_measure" json:"unitMeasure"`
 }
+
 type Recipe struct {
 	RawMaterial Article `db:"raw_material" json:"rawMaterial"`
 	Amount      float32 `db:"amount" json:"amount"`
