@@ -1,13 +1,3 @@
-DROP TABLE IF EXISTS main.in_house_companies;
-DROP TABLE IF EXISTS main.article_has_recipes;
-DROP TABLE IF EXISTS main.report_has_recipes;
-DROP TABLE IF EXISTS main.report_has_articles;
-DROP TABLE IF EXISTS main.receipts;
-DROP TABLE IF EXISTS main.shipments;
-DROP TABLE IF EXISTS main.reports;
-DROP TABLE IF EXISTS main.articles;
-DROP TABLE IF EXISTS main.unit_measurements;
-
 CREATE TABLE main.in_house_companies
 (
     name VARCHAR(128) PRIMARY KEY NOT NULL
