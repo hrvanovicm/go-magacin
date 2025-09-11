@@ -3,49 +3,52 @@ package app
 import (
 	"context"
 	"hrvanovicm/magacin/internal/unit"
+	"slices"
 
 	"github.com/jmoiron/sqlx"
 )
 
+// GetAllUnitMeasurements
 func (a *WailsApp) GetAllUnitMeasurements() ([]unit.UnitMeasure, error) {
-	var result []unit.UnitMeasure
+	response := []unit.UnitMeasure{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = unit.GetAll(ctx, tx)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if unitMeasures, err := unit.FindAll(ctx, tx); err != nil {
+			return err
+		} else {
+			response = unitMeasures
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }
 
+// SaveAllUnitMeasures
 func (a *WailsApp) SaveAllUnitMeasures(ums []unit.UnitMeasure) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		existings, err := unit.GetAll(ctx, tx)
+	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		existing, err := unit.FindAll(ctx, tx)
 		if err != nil {
 			return err
 		}
 
-		ids := make([]int64, len(ums))
+		usedIDs := make([]int64, len(ums))
 		for i := range ums {
-			ids[i] = ums[i].ID
-			err := unit.Save(ctx, tx, &ums[i])
-			if err != nil {
+			usedIDs[i] = ums[i].ID
+			if err := unit.Save(ctx, tx, &ums[i]); err != nil {
 				return err
 			}
 		}
 
-		for i := range existings {
-			found := false
-			for _, id := range ids {
-				if id == existings[i].ID {
-					found = true
-					break
-				}
-			}
-			if !found {
-				err := unit.Delete(ctx, tx, existings[i].ID)
-				if err != nil {
+		for _, existingUM := range existing {
+			if !slices.Contains(usedIDs, existingUM.ID) {
+				if err := unit.Delete(ctx, tx, existingUM.ID); err != nil {
 					return err
 				}
 			}
@@ -53,10 +56,29 @@ func (a *WailsApp) SaveAllUnitMeasures(ums []unit.UnitMeasure) error {
 
 		return nil
 	})
+
+	if err != nil {
+		a.HandleError(err)
+		return err
+	}
+
+	return nil
 }
 
+// DeleteUnitMeasure
 func (a *WailsApp) DeleteUnitMeasure(id int64) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		return unit.Delete(ctx, tx, id)
+	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if err := unit.Delete(ctx, tx, id); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
+	if err != nil {
+		a.HandleError(err)
+		return err
+	}
+
+	return nil
 }

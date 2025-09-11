@@ -7,14 +7,24 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// GetAllUserNames
 func (a *WailsApp) GetAllUserNames() ([]string, error) {
-	var result []string
+	response := []string{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = report.GetAllSignUsers(ctx, tx)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if users, err := report.FindAllSignUsers(ctx, tx); err != nil {
+			return err
+		} else {
+			response = users
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }

@@ -7,14 +7,24 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// GetAllCompanies
 func (a *WailsApp) GetAllCompanies() ([]company.Company, error) {
-	var result []company.Company
+	response := []company.Company{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = company.GetAll(ctx, tx)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if companies, err := company.FindAll(ctx, tx); err != nil {
+			return err
+		} else {
+			response = companies
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }

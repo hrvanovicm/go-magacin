@@ -7,71 +7,140 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func (a *WailsApp) GetReportTypes() []report.ReportType {
-	return report.GetAllTypes()
+// GetAllReportTypes
+func (a *WailsApp) GetAllReportTypes() []report.ReportType {
+	return report.FindAllTypes()
 }
 
+// GetAllReports
 func (a *WailsApp) GetAllReports() ([]report.Report, error) {
-	var result []report.Report
+	response := []report.Report{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = report.GetAllReports(ctx, tx)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if reports, err := report.FindAllReports(ctx, tx); err != nil {
+			return err
+		} else {
+			response = reports
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }
 
+// GetAllReportPublishLocations
 func (a *WailsApp) GetAllReportPublishLocations() ([]string, error) {
-	var result []string
+	response := []string{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = report.GetAllPublishLocations(ctx, tx)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if locations, err := report.FindAllPublishLocations(ctx, tx); err != nil {
+			return err
+		} else {
+			response = locations
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }
 
+// GetNextReportCode
 func (a *WailsApp) GetNextReportCode() (string, error) {
-	var result string
+	var response string
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = report.GetNextReportCode(ctx, tx)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if reportCode, err := report.FindNextReportCode(ctx, tx); err != nil {
+			return err
+		} else {
+			response = reportCode
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }
 
+// GetReportArticles
 func (a *WailsApp) GetReportArticles(id int64) ([]report.ReportArticle, error) {
-	var result []report.ReportArticle
+	response := []report.ReportArticle{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = report.GetArticlesByReportId(ctx, tx, id)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if reportArticles, err := report.FindArticlesByReportId(ctx, tx, id); err != nil {
+			return err
+		} else {
+			response = reportArticles
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }
 
+// SaveReport
 func (a *WailsApp) SaveReport(rep *report.Report, articles []report.ReportArticle) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		err := report.Save(ctx, tx, rep)
-		if err != nil {
+	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if err := report.Save(ctx, tx, rep); err != nil {
 			return err
 		}
 
-		return report.SaveArticles(ctx, tx, rep.ID, articles)
+		if err := report.SaveArticles(ctx, tx, rep, articles); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
+	if err != nil {
+		a.HandleError(err)
+		return err
+	}
+
+	return nil
 }
 
+// DeleteReport
 func (a *WailsApp) DeleteReport(id int64) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		return report.Delete(ctx, tx, id)
+	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if err := report.Delete(ctx, tx, id); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
+	if err != nil {
+		a.HandleError(err)
+		return err
+	}
+
+	return nil
+}
+
+// CanReportUseRecipes
+func (a *WailsApp) CanReportUseRecipes(rep *report.Report) bool {
+	return rep.CanUseRecipes()
 }

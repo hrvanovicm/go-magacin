@@ -10,18 +10,25 @@ import (
 )
 
 type Uow struct {
-	db *sqlx.DB
-	tx *sqlx.Tx
+	ctx      context.Context
+	db       *sqlx.DB
+	tx       *sqlx.Tx
+	readOnly bool
 }
 
-func NewUow(db *sqlx.DB) *Uow {
+func NewUow(ctx context.Context, db *sqlx.DB, readOnly bool) *Uow {
 	return &Uow{
-		db: db,
+		db:       db,
+		readOnly: readOnly,
+		ctx:      ctx,
 	}
 }
 
 func (s *Uow) Begin() error {
-	tx, err := s.db.Beginx()
+	tx, err := s.db.BeginTxx(s.ctx, &sql.TxOptions{
+		ReadOnly: s.readOnly,
+	})
+
 	if err != nil {
 		return err
 	}

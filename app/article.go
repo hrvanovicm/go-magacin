@@ -7,43 +7,86 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// GetAllArticles
 func (a *WailsApp) GetAllArticles() ([]article.Article, error) {
-	var result []article.Article
+	response := []article.Article{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = article.GetAll(ctx, tx)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if articles, err := article.FindAll(ctx, tx); err != nil {
+			return err
+		} else {
+			response = articles
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, nil
 }
 
+// GetAllReceptionsByArticleID
 func (a *WailsApp) GetAllReceptionsByArticleID(id int64) ([]article.Recipe, error) {
-	var result []article.Recipe
+	response := []article.Recipe{}
 
-	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		var err error
-		result, err = article.GetRecipes(ctx, tx, id)
-		return err
+	err := a.runWithReadTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if recipes, err := article.FindAllRecipes(ctx, tx, id); err != nil {
+			return err
+		} else {
+			response = recipes
+		}
+
+		return nil
 	})
 
-	return result, err
+	if err != nil {
+		a.HandleError(err)
+		return response, err
+	}
+
+	return response, err
 }
 
-func (a *WailsApp) SaveArticle(art *article.Article, receptions []article.Recipe) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		err := article.Save(ctx, tx, art)
-		if err != nil {
+// SaveArticle
+func (a *WailsApp) SaveArticle(art *article.Article, recs []article.Recipe) error {
+	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if err := article.Save(ctx, tx, art); err != nil {
 			return err
 		}
 
-		return article.SaveRecipes(ctx, tx, art.ID, receptions)
+		if err := article.SaveRecipes(ctx, tx, art.ID, recs); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
+	if err != nil {
+		a.HandleError(err)
+		return err
+	}
+
+	return nil
 }
 
+// DeleteArticle
 func (a *WailsApp) DeleteArticle(id int64) error {
-	return a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
-		return article.Delete(ctx, tx, id)
+	err := a.runWithTx(func(ctx context.Context, tx *sqlx.Tx) error {
+		if err := article.Delete(ctx, tx, id); err != nil {
+			return err
+		}
+
+		return nil
 	})
+
+	if err != nil {
+		a.HandleError(err)
+		return err
+	}
+
+	return nil
 }

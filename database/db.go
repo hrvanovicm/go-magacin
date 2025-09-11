@@ -16,12 +16,17 @@ func NewDB(connection string) *DB {
 	}
 }
 
-func (db *DB) Connect() {
+func (db *DB) Connect() error {
 	conn, err := sqlx.Connect("sqlite3", db.connection)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	db.Conn = conn
+	return nil
+}
+
+func (db *DB) Close() error {
+	return db.Conn.Close()
 }
