@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, inject, ViewChild } from '@angular/core';
+import { AfterContentInit, Component, inject, signal, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,7 +26,11 @@ import {
 } from '../../shared/inputs';
 import Report = report.Report;
 import { ReportService, ReportType, ReportTypeValues } from '../report.service';
-import { ArticleCategoryValues } from '../../article/article.service';
+import {
+  ArticleCategory,
+  ArticleCategoryValues,
+  ArticleService,
+} from '../../article/article.service';
 import { ReporTypeNamePipe } from '../report.pipes';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -35,6 +39,7 @@ import ReportRecipe = report.ReportRecipe;
 import Company = company.Company;
 import Article = article.Article;
 import Recipe = article.Recipe;
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 export interface ReportEditDialogResult {
   report?: Report;
@@ -117,6 +122,8 @@ export interface ReportEditDialogResult {
                   <app-amount-input
                     label="Količina"
                     [control]="articleAmountControl"
+                    [disabled]="!articleControl.value"
+                    [unitMeasure]="articleControl.value?.unitMeasure"
                     class="w-28"
                   />
                   <button matButton="filled" type="submit">Dodaj</button>
@@ -127,7 +134,7 @@ export interface ReportEditDialogResult {
           <table mat-table class="mt-1" [dataSource]="articleDataSource" multiTemplateDataRows>
             <ng-container matColumnDef="position">
               <th mat-header-cell *matHeaderCellDef>Rb.</th>
-              <td mat-cell *matCellDef="let element; let i = index"> {{ i }} .</td>
+              <td mat-cell *matCellDef="let element">{{ getRowIndex(element) + 1 }} .</td>
             </ng-container>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef>Sirovina</th>
@@ -138,8 +145,10 @@ export interface ReportEditDialogResult {
               <td mat-cell *matCellDef="let element">
                 <app-amount-input
                   label="Količina"
+                  [initValue]="element.amount"
                   [unitMeasure]="element.article.unitMeasure"
-                  (click)="$event.preventDefault()"
+                  (onValueChange)="updateArticleAmount($event, element.article)"
+                  (click)="$event.stopPropagation(); $event.preventDefault()"
                 />
               </td>
             </ng-container>
@@ -152,67 +161,96 @@ export interface ReportEditDialogResult {
               </td>
             </ng-container>
             <ng-container matColumnDef="expandedDetail">
-              <td class="!p-0" mat-cell *matCellDef="let element" [attr.colspan]="articleDisplayedColumnsExpanded.length">
+              <td
+                class="!p-0"
+                mat-cell
+                *matCellDef="let element"
+                [attr.colspan]="articleDisplayedColumnsExpanded.length"
+              >
                 <div
                   class="example-element-detail-wrapper !bg-gray-100 mt-2 rounded-lg"
                   [class.example-element-detail-wrapper-expanded]="isArticleExpanded(element)"
                 >
-                  <div class="example-element-detail flex flex-col !bg-transparent px-3 py-2">
-                    <h4 class="text-xl mt-3 mb-2">Receptura</h4>
-                    <mat-accordion>
-                      <mat-expansion-panel class="!shadow-none" #addRecipePanel>
-                        <mat-expansion-panel-header>
-                          <mat-panel-title>
-                            <mat-icon>add</mat-icon>
-                            <span class="ml-3"> Dodaj recepturu </span>
-                          </mat-panel-title>
-                        </mat-expansion-panel-header>
-                        <form
-                          class="flex flex-row justify-between gap-x-3"
-                          [formGroup]="recipeForm"
-                          (submit)="submitRecipeForm()"
-                        >
-                          <app-article-autocomplete
-                            label="Sirovina"
-                            class="w-full"
-                            [control]="recipeRawMaterialControl"
-                            [excludes]="currentArticles"
-                            [includeCategories]="ArticleCategoryValues"
-                          />
-                          <app-amount-input
-                            label="Količina"
-                            [control]="recipeAmountControl"
-                            class="w-28"
-                          />
-                          <button matButton="filled" type="submit">Dodaj</button>
-                        </form>
-                      </mat-expansion-panel>
-                    </mat-accordion>
-                    <table mat-table class="mat-elevation-z8 !bg-transparent" [dataSource]="recipeDataSource">
-                      <ng-container matColumnDef="position">
-                        <th mat-header-cell *matHeaderCellDef>Rb.</th>
-                        <td mat-cell *matCellDef="let i = index">{{ i + 1 }}.</td>
-                      </ng-container>
-                      <ng-container matColumnDef="name">
-                        <th mat-header-cell *matHeaderCellDef>Sirovina</th>
-                        <td mat-cell *matCellDef="let element">{{ element.rawMaterial.name }}</td>
-                      </ng-container>
-                      <ng-container matColumnDef="amount">
-                        <th mat-header-cell *matHeaderCellDef>Količina</th>
-                        <td mat-cell *matCellDef="let element">{{ element.amount }}</td>
-                      </ng-container>
-                      <ng-container matColumnDef="actions">
-                        <th mat-header-cell *matHeaderCellDef></th>
-                        <td mat-cell *matCellDef="let element">
-                          <button matIconButton (click)="removeRecipe(expandedElement, element)">
-                            <mat-icon>delete</mat-icon>
-                          </button>
-                        </td>
-                      </ng-container>
-                      <tr mat-header-row *matHeaderRowDef="recipeDisplayedColumns"></tr>
-                      <tr mat-row *matRowDef="let row; columns: recipeDisplayedColumns"></tr>
-                    </table>
-                  </div>
+                  @if (canRecipe()) {
+                    <div class="example-element-detail flex flex-col !bg-transparent px-3 py-2">
+                      <h4 class="text-xl mt-3 mb-2">Receptura</h4>
+                      <mat-accordion>
+                        <mat-expansion-panel class="!shadow-none" #addRecipePanel>
+                          <mat-expansion-panel-header>
+                            <mat-panel-title>
+                              <mat-icon>add</mat-icon>
+                              <span class="ml-3"> Dodaj recepturu </span>
+                            </mat-panel-title>
+                          </mat-expansion-panel-header>
+                          <form
+                            class="flex flex-row justify-between gap-x-3"
+                            [formGroup]="recipeForm"
+                            (submit)="submitRecipeForm()"
+                          >
+                            <app-article-autocomplete
+                              label="Sirovina"
+                              class="w-full"
+                              [control]="recipeRawMaterialControl"
+                              [excludes]="currentArticles"
+                              [includeCategories]="ArticleCategoryValues"
+                            />
+                            <app-amount-input
+                              label="Količina"
+                              [control]="recipeAmountControl"
+                              [unitMeasure]="recipeRawMaterialControl.value?.unitMeasure"
+                              [disabled]="!recipeRawMaterialControl.value"
+                              class="w-28"
+                            />
+                            <button matButton="filled" type="submit">Dodaj</button>
+                          </form>
+                        </mat-expansion-panel>
+                      </mat-accordion>
+                      <table
+                        mat-table
+                        class="mat-elevation-z8 !bg-transparent"
+                        [dataSource]="recipeDataSource"
+                      >
+                        <ng-container matColumnDef="position">
+                          <th mat-header-cell *matHeaderCellDef>Rb.</th>
+                          <td mat-cell *matCellDef="let i = index">{{ i + 1 }}.</td>
+                        </ng-container>
+                        <ng-container matColumnDef="name">
+                          <th mat-header-cell *matHeaderCellDef>Sirovina</th>
+                          <td mat-cell *matCellDef="let element">{{ element.rawMaterial.name }}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="amount">
+                          <th mat-header-cell *matHeaderCellDef>Količina</th>
+                          <td mat-cell *matCellDef="let element">
+                            <app-amount-input
+                              label="Količina"
+                              [initValue]="element.amount"
+                              [unitMeasure]="element.rawMaterial.unitMeasure"
+                              (onValueChange)="
+                                updateRawMaterialAmount(
+                                  $event,
+                                  expandedElement ?? undefined,
+                                  element.rawMaterial
+                                )
+                              "
+                              (click)="$event.preventDefault()"
+                            />
+                          </td>
+                        </ng-container>
+                        <ng-container matColumnDef="actions">
+                          <th mat-header-cell *matHeaderCellDef></th>
+                          <td mat-cell *matCellDef="let element">
+                            <button matIconButton (click)="removeRecipe(expandedElement, element)">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </td>
+                        </ng-container>
+                        <tr mat-header-row *matHeaderRowDef="recipeDisplayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: recipeDisplayedColumns"></tr>
+                      </table>
+                    </div>
+                  } @else {
+                    <p>Ovaj izvještaj ne može korisiti recepture</p>
+                  }
                 </div>
               </td>
             </ng-container>
@@ -234,7 +272,9 @@ export interface ReportEditDialogResult {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button matButton mat-dialog-close>Odustani</button>
-      <button matButton="filled" cdkFocusInitial (click)="save()">Sačuvaj</button>
+      <button matButton="filled" cdkFocusInitial (click)="save()" [disabled]="!form.valid">
+        Sačuvaj
+      </button>
     </mat-dialog-actions>
   `,
   imports: [
@@ -270,7 +310,7 @@ export interface ReportEditDialogResult {
     tr {
       cursor: pointer;
     }
-    
+
     tr.example-detail-row {
       height: 0;
     }
@@ -321,9 +361,11 @@ export class ReportEditDialog implements AfterContentInit {
   @ViewChild('addArticlePanel') articleCreatePanel!: MatExpansionPanel;
   @ViewChild('addRecipePanel') recipeCreatePanel!: MatExpansionPanel;
 
+  readonly snackbar = inject(MatSnackBar);
   readonly data = inject<Report | undefined>(MAT_DIALOG_DATA);
   readonly dialogRef = inject(MatDialogRef<ReportEditDialog>);
   readonly reportService = inject(ReportService);
+  readonly articleService = inject(ArticleService);
 
   readonly form = new FormGroup({
     type: new FormControl<ReportType | null>(null, [Validators.required]),
@@ -351,6 +393,12 @@ export class ReportEditDialog implements AfterContentInit {
     rawMaterial: new FormControl<Article | null>(null, [Validators.required]),
     amount: new FormControl(0, [Validators.required]),
   });
+
+  readonly canRecipe = signal<boolean>(false);
+
+  getRowIndex(element: any): number {
+    return this.articleDataSource.data.indexOf(element);
+  }
 
   get currentArticles() {
     return this.articleDataSource.data.map((r) => r.article);
@@ -402,10 +450,12 @@ export class ReportEditDialog implements AfterContentInit {
         supplierCompany: this.data.receipt.supplierCompany.name ?? '',
         supplierReportCode: this.data.receipt.supplierReportCode ?? '',
       });
-    }
 
-    if (this.data) {
       this.articleDataSource.data = await this.reportService.getArticles(this.data.id);
+    } else {
+      this.form.patchValue({
+        code: await this.reportService.getNextCode(),
+      });
     }
   }
 
@@ -420,26 +470,35 @@ export class ReportEditDialog implements AfterContentInit {
       (r) => r.rawMaterial.id != recipe?.rawMaterial.id,
     );
 
-    this.articleDataSource.data = this.articleDataSource.data.map(value => {
-      if(value.article.id == article?.article.id) {
+    this.articleDataSource.data = this.articleDataSource.data.map((value) => {
+      if (value.article.id == article?.article.id) {
         value.usedRecipes = this.recipeDataSource.data ?? [];
       }
 
       return value;
-    })
+    });
   }
 
-  submitArticleForm() {
+  async submitArticleForm() {
     if (!this.articleForm.valid) {
       return;
     }
+
+    let article = this.articleForm.value.article as Article;
+    let amount = this.articleForm.value.amount as number;
+    let recipes = await this.articleService.getReceptions(article.id);
 
     this.articleDataSource.data = [
       ...this.articleDataSource.data,
       ReportArticle.createFrom({
         article: this.articleForm.value.article,
         amount: parseFloat(String(this.articleForm.value.amount)),
-        usedRecipes: [],
+        usedRecipes: recipes.map((r) =>
+          ReportRecipe.createFrom({
+            rawMaterial: r.rawMaterial,
+            amount: r.amount * amount,
+          }),
+        ),
       }),
     ];
 
@@ -448,8 +507,6 @@ export class ReportEditDialog implements AfterContentInit {
       article: null,
       amount: 0,
     });
-
-    console.log(this.articleDataSource.data);
   }
 
   submitRecipeForm() {
@@ -474,50 +531,106 @@ export class ReportEditDialog implements AfterContentInit {
     });
   }
 
-  expandArticle(element: ReportArticle) {
+  async expandArticle(element: ReportArticle) {
     this.expandedElement = this.isArticleExpanded(element) ? null : element;
     this.recipeDataSource.data = element.usedRecipes;
+    this.canRecipe.set(
+      await this.reportService.canUseRecipe(element.article, await this.toRecipe()),
+    );
   }
 
   isArticleExpanded(element: ReportArticle) {
     return this.expandedElement === element;
   }
 
-  async save() {
-    let formValue = this.form.value;
+  updateArticleAmount(amount: number, article?: Article) {
+    if (!article) {
+      return;
+    }
 
-    let report = Report.createFrom({
+    this.articleDataSource.data = this.articleDataSource.data.map((r) => {
+      if (r.article.id == article.id) {
+        r.amount = amount;
+        console.log('updating');
+      }
+      return r;
+    });
+  }
+
+  updateRawMaterialAmount(amount: number, article?: ReportArticle, rawMaterial?: Article) {
+    if (!rawMaterial || !article) {
+      return;
+    }
+
+    this.recipeDataSource.data = this.recipeDataSource.data.map((r) => {
+      if (r.rawMaterial.id == rawMaterial.id) {
+        r.amount = amount;
+      }
+      return r;
+    });
+
+    this.articleDataSource.data = this.articleDataSource.data.map((r) => {
+      if (r.article.id != article.article.id) {
+        return r;
+      }
+
+      r.usedRecipes = r.usedRecipes.map((rec) => {
+        if (rec.rawMaterial.id == rawMaterial.id) {
+          rec.amount = amount;
+        }
+
+        return rec;
+      });
+
+      return r;
+    });
+  }
+
+  async save() {
+    let report = await this.toRecipe();
+    let articles = this.articleDataSource.data.map((a) => {
+      if (report.type != ReportType.RECEIPT || !report.receipt.supplierCompany.inHouseProduction) {
+        a.usedRecipes = [];
+      }
+      return a;
+    });
+
+    try {
+      await this.reportService.save(report, articles);
+      this.snackbar.open(`✅ Uspješno sačuvan izvještaj!`);
+      this.dialogRef.close({
+        report: report,
+        articles: articles,
+      });
+    } catch (error) {
+      this.snackbar.open(`❌ Došlo je do greške prilikom spremanja izvještaja!`);
+    }
+  }
+
+  async toRecipe() {
+    let companies = await this.reportService.getAllCompanies();
+    let formValue = this.form.value;
+    console.log(formValue);
+
+    return Report.createFrom({
       id: this.data?.id ?? 0,
       type: formValue.type,
       code: (formValue.code?.length ?? 0) > 0 ? formValue.code : undefined,
-      signedAt: (formValue.signedAt?.length ?? 0) > 0 ? formValue.signedAt : undefined,
+      signedAt: formValue.signedAt ? formValue.signedAt : undefined,
       signedAtLocation:
         (formValue.signedAtLocation?.length ?? 0) > 0 ? formValue.signedAtLocation : undefined,
       signedBy: (formValue.signedBy?.length ?? 0) > 0 ? formValue.signedBy : undefined,
       receipt: {
         supplierCompany:
-          formValue.supplierCompany != ''
-            ? Company.createFrom({
-                name: formValue.supplierCompany,
-              })
-            : undefined,
+          companies.find((company) => company.name == formValue.supplierCompany) ?? undefined,
         supplierReportCode:
           formValue.supplierReportCode != '' ? formValue.supplierReportCode : undefined,
       },
       shipment: {
         receiptCompany:
-          formValue.receiptCompany != ''
-            ? Company.createFrom({
-                name: formValue.receiptCompany,
-              })
-            : undefined,
+          companies.find((company) => company.name == formValue.receiptCompany) ?? undefined,
       },
     });
-
-    console.log(this.articleDataSource.data);
-    await this.reportService.save(report, this.articleDataSource.data);
-
-    this.dialogRef.close(this.data);
   }
 
   protected readonly ReportTypeValues = ReportTypeValues;

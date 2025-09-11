@@ -1,19 +1,31 @@
-import {AfterContentInit, AfterViewInit, Component, inject, OnInit, ViewChild} from '@angular/core';
-import {MatTableDataSource, MatTableModule} from '@angular/material/table';
-import {MatToolbarModule} from '@angular/material/toolbar';
-import {MatFormFieldModule} from '@angular/material/form-field';
-import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
-import {MatInputModule} from '@angular/material/input';
-import {MatButton, MatIconButton} from '@angular/material/button';
-import {MatIconModule} from '@angular/material/icon';
-import {ArticleCategory, ArticleCategoryValues, ArticleParams, ArticleService} from './article.service';
-import {MatDialog} from '@angular/material/dialog';
-import {ArticleEditDialog, ArticleEditDialogResult} from './components/edit.dialog';
-import {MatChipsModule} from '@angular/material/chips';
-import {MatSort, MatSortModule} from '@angular/material/sort';
-import {debounceTime} from 'rxjs';
-import {article} from '../../../wailsjs/go/models';
-import {ArticleCategoryPipe, ArticleInStockPipe} from './article.pipes';
+import {
+  AfterContentInit,
+  AfterViewInit,
+  Component,
+  inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatInputModule } from '@angular/material/input';
+import { MatButton, MatIconButton } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  ArticleCategory,
+  ArticleCategoryValues,
+  ArticleParams,
+  ArticleService,
+} from './article.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ArticleEditDialog, ArticleEditDialogResult } from './components/edit.dialog';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { debounceTime } from 'rxjs';
+import { article } from '../../../wailsjs/go/models';
+import { ArticleCategoryPipe, ArticleInStockPipe } from './article.pipes';
 import Article = article.Article;
 
 @Component({
@@ -29,7 +41,7 @@ import Article = article.Article;
     MatSortModule,
     ReactiveFormsModule,
     ArticleCategoryPipe,
-    ArticleInStockPipe
+    ArticleInStockPipe,
   ],
   template: `
     <mat-toolbar>
@@ -39,7 +51,7 @@ import Article = article.Article;
         <form class="flex flex-row gap-x-1" [formGroup]="filterForm">
           <mat-form-field class="w-64">
             <mat-label>Pretraga</mat-label>
-            <input matInput formControlName="search">
+            <input matInput formControlName="search" />
           </mat-form-field>
           <div class="flex flex-row gap-x-1">
             <button matIconButton (click)="reset()">
@@ -50,48 +62,64 @@ import Article = article.Article;
               <mat-chip-option [value]="ArticleCategory.COMMERCIAL">Komercijala</mat-chip-option>
               <mat-chip-option [value]="ArticleCategory.RAW_MATERIAL">Sirovine</mat-chip-option>
             </mat-chip-listbox>
-            <mat-chip-listbox formControlName="isLowInStock" [multiple]="false" class="flex flex-row">
+            <mat-chip-listbox
+              formControlName="isLowInStock"
+              [multiple]="false"
+              class="flex flex-row"
+            >
               <mat-chip-option [value]="true">Stanje pri kraju</mat-chip-option>
             </mat-chip-listbox>
           </div>
         </form>
         <span class="flex-1 basis-auto"></span>
-        <button matButton (click)="openCreateDialog()"> Kreiraj robu <mat-icon>add</mat-icon> </button>
+        <button matButton (click)="openCreateDialog()">
+          Kreiraj robu <mat-icon>add</mat-icon>
+        </button>
       </mat-toolbar-row>
     </mat-toolbar>
 
     <div class="w-full h-full overflow-y-scroll">
       <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" matSort>
         <ng-container matColumnDef="position">
-          <th mat-header-cell *matHeaderCellDef> Rb. </th>
-          <td mat-cell *matCellDef="let i = index"> {{ i + 1 }}.</td>
+          <th mat-header-cell *matHeaderCellDef>Rb.</th>
+          <td mat-cell *matCellDef="let i = index">{{ i + 1 }}.</td>
         </ng-container>
         <ng-container matColumnDef="icon">
           <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let i = index"> <mat-icon class="text-xl text-gray-600">sell</mat-icon></td>
+          <td mat-cell *matCellDef="let i = index">
+            <mat-icon class="text-xl text-gray-600">sell</mat-icon>
+          </td>
         </ng-container>
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Naziv </th>
-          <td mat-cell *matCellDef="let element"> <strong> {{ element.name }} </strong></td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Naziv</th>
+          <td mat-cell *matCellDef="let element">
+            <strong> {{ element.name }} </strong>
+          </td>
         </ng-container>
         <ng-container matColumnDef="code">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Šifra </th>
-          <td mat-cell *matCellDef="let element"> {{ element.code }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Šifra</th>
+          <td mat-cell *matCellDef="let element">{{ element.code }}</td>
         </ng-container>
         <ng-container matColumnDef="category">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Tip </th>
-          <td mat-cell *matCellDef="let element"> {{ element.category | articleCategoryName }}</td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tip</th>
+          <td mat-cell *matCellDef="let element">{{ element.category | articleCategoryName }}</td>
         </ng-container>
         <ng-container matColumnDef="tags">
-          <th mat-header-cell *matHeaderCellDef> Oznake </th>
-          <td mat-cell *matCellDef="let element"> {{ element.tags.split(',').join(', ') }}</td>
+          <th mat-header-cell *matHeaderCellDef>Oznake</th>
+          <td mat-cell *matCellDef="let element">{{ element.tags.split(',').join(', ') }}</td>
         </ng-container>
         <ng-container matColumnDef="inStockAmount">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Na stanju </th>
-          <td mat-cell *matCellDef="let element"><span [innerHTML]="element.inStockAmount | articleInStock: element.unitMeasure"></span></td>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Na stanju</th>
+          <td mat-cell *matCellDef="let element">
+            <span [innerHTML]="element.inStockAmount | articleInStock: element.unitMeasure"></span>
+          </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openUpdateDialog(row)"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          (click)="openUpdateDialog(row)"
+        ></tr>
       </table>
     </div>
   `,
@@ -105,7 +133,7 @@ import Article = article.Article;
     tr:not(.example-expanded-row):hover {
       background: whitesmoke !important;
     }
-  `
+  `,
 })
 export class ProductIndexPage implements OnInit, AfterViewInit {
   @ViewChild(MatSort) sort!: MatSort;
@@ -113,13 +141,21 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
   readonly articleService = inject(ArticleService);
   readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns: string[] = ['position', 'icon', 'name', 'code', 'category', 'tags', 'inStockAmount'];
+  readonly displayedColumns: string[] = [
+    'position',
+    'icon',
+    'name',
+    'code',
+    'category',
+    'tags',
+    'inStockAmount',
+  ];
   readonly dataSource = new MatTableDataSource<Article>([]);
   readonly filterForm = new FormGroup({
     search: new FormControl<string | null>(null),
     categories: new FormControl<ArticleCategory[]>(ArticleCategoryValues),
-    isLowInStock: new FormControl<boolean | null>(null)
-  })
+    isLowInStock: new FormControl<boolean | null>(null),
+  });
 
   ngOnInit() {
     this.filterForm.valueChanges.pipe(debounceTime(150)).subscribe(() => this.load());
@@ -142,11 +178,8 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
     });
 
     dialogRef.afterClosed().subscribe(async (result?: ArticleEditDialogResult) => {
-      if(result) {
-        let data = this.dataSource.data;
-        data.push(result.article!);
-
-        this.dataSource.data = data;
+      if (result) {
+        this.load();
       }
     });
   }
@@ -161,21 +194,13 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
       maxWidth: '600px',
       data: {
         article: article,
-        receptions: receptions
-      }
+        receptions: receptions,
+      },
     });
 
     dialogRef.afterClosed().subscribe(async (result?: ArticleEditDialogResult) => {
-      if(result) {
-        let data = this.dataSource.data;
-        data.map(a => {
-          if(a.id === result.article!.id) {
-            a = result.article!;
-          }
-          return a;
-        })
-
-        this.dataSource.data = data;
+      if (result) {
+        this.load();
       }
     });
   }
@@ -184,8 +209,8 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
     this.filterForm.setValue({
       search: null,
       categories: ArticleCategoryValues,
-      isLowInStock: null
-    })
+      isLowInStock: null,
+    });
 
     await this.load();
   }
@@ -194,17 +219,17 @@ export class ProductIndexPage implements OnInit, AfterViewInit {
     let filterFormValue = this.filterForm.getRawValue();
     let params: Partial<ArticleParams> = {};
 
-    if(filterFormValue.search) {
+    if (filterFormValue.search) {
       params.search = filterFormValue.search;
     }
 
-    if(filterFormValue.isLowInStock) {
+    if (filterFormValue.isLowInStock) {
       params.lowInStock = true;
     }
 
-    if(this.sort.active) {
+    if (this.sort.active) {
       params.sortBy = this.sort.active;
-      params.sortDirection = this.sort.direction ?? "asc";
+      params.sortDirection = this.sort.direction ?? 'asc';
     }
 
     params.categories = filterFormValue.categories ?? [];

@@ -1,14 +1,19 @@
-import {Injectable} from '@angular/core';
-import {report} from '../../../wailsjs/go/models';
+import { Injectable } from '@angular/core';
+import { article, report } from '../../../wailsjs/go/models';
 import Report = report.Report;
 import {
+  CanReportUseRecipes,
   GetAllCompanies,
-  GetAllReportPublishLocations, GetAllReports,
+  GetAllReportPublishLocations,
+  GetAllReports,
   GetAllUserNames,
-  GetReportArticles, SaveReport
+  GetNextReportCode,
+  GetReportArticles,
+  SaveReport,
 } from '../../../wailsjs/go/app/WailsApp';
 import ReportArticle = report.ReportArticle;
-
+import Article = article.Article;
+import { ArticleCategory, ArticleCategoryValues } from '../article/article.service';
 
 export enum ReportType {
   RECEIPT = 'RECEIPT',
@@ -29,24 +34,27 @@ export class ReportService {
   async getAll(params: Partial<ReportParams>): Promise<any[]> {
     let reports = await GetAllReports();
 
-    if(params.search != undefined) {
+    if (params.search != undefined) {
       const search = params.search.trim().toLowerCase();
 
-      reports = reports.filter(report => {
-        return report.code?.toLowerCase().includes(search) ||
+      reports = reports.filter((report) => {
+        return (
+          report.code?.toLowerCase().includes(search) ||
           report.shipment.receiptCompany.name?.toLowerCase().includes(search) ||
           report.receipt.supplierCompany.name?.toLowerCase().includes(search) ||
-          report.receipt.supplierReportCode?.toLowerCase().includes(search);
-      })
+          report.receipt.supplierReportCode?.toLowerCase().includes(search)
+        );
+      });
     }
 
-    if(params.types != undefined) {
-      reports = reports.filter(report => {
-        return params.types!.some(type =>
-          (type === ReportType.RECEIPT && report.type === ReportType.RECEIPT) ||
-          (type === ReportType.SHIPMENT && report.type === ReportType.SHIPMENT)
+    if (params.types != undefined) {
+      reports = reports.filter((report) => {
+        return params.types!.some(
+          (type) =>
+            (type === ReportType.RECEIPT && report.type === ReportType.RECEIPT) ||
+            (type === ReportType.SHIPMENT && report.type === ReportType.SHIPMENT),
         );
-      })
+      });
     }
 
     if (params.sortBy != undefined) {
@@ -58,7 +66,7 @@ export class ReportService {
 
         switch (sortField) {
           case 'name':
-            compareValue = a.code?.localeCompare(b.code ?? "") ?? 0;
+            compareValue = a.code?.localeCompare(b.code ?? '') ?? 0;
             break;
           case 'signedOnDate':
             compareValue = (a.signedAt ?? '').localeCompare(b.signedAt ?? '');
@@ -71,7 +79,7 @@ export class ReportService {
         }
 
         return sortDirection === 'asc' ? compareValue : -compareValue;
-      })
+      });
     }
 
     return reports;
@@ -93,7 +101,19 @@ export class ReportService {
     return await GetReportArticles(id);
   }
 
+  async getNextCode() {
+    return await GetNextReportCode();
+  }
+
   async save(request: Report, articles: ReportArticle[]) {
     await SaveReport(request, articles);
+  }
+
+  async canUseRecipe(article: Article, request: Report) {
+    if (article.category != ArticleCategory.PRODUCT) {
+      return Promise.resolve(false);
+    }
+
+    return await CanReportUseRecipes(request);
   }
 }

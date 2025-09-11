@@ -60,7 +60,7 @@ import Report = report.Report;
         </form>
         <span class="flex-1 basis-auto"></span>
         <button matButton (click)="openCreateDialog()">
-          Kreiraj robu <mat-icon>add</mat-icon>
+          Kreiraj izvještaj <mat-icon>add</mat-icon>
         </button>
       </mat-toolbar-row>
     </mat-toolbar>
@@ -91,9 +91,14 @@ import Report = report.Report;
         <td mat-cell *matCellDef="let element">
           @if (element.type === ReportType.RECEIPT) {
             {{ element.receipt.supplierCompany.name }}
+            @if (element.receipt.supplierCompany.inHouseProduction) {
+              <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+            }
           } @else if (element.type === ReportType.SHIPMENT) {
             {{ element.shipment.receiptCompany.name }}
-            <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+            @if (element.shipment.receiptCompany.inHouseProduction) {
+              <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+            }
           }
         </td>
       </ng-container>
@@ -145,7 +150,7 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
     'locationOfPublish',
     'signedByName',
   ];
-  readonly dataSource = new MatTableDataSource<Article>([]);
+  readonly dataSource = new MatTableDataSource<Report>([]);
   readonly filterForm = new FormGroup({
     search: new FormControl<string | null>(null),
     types: new FormControl<ReportType[]>(ReportTypeValues),
@@ -173,9 +178,7 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().subscribe(async (result?: ReportEditDialogResult) => {
       if (result) {
-        // let data = this.dataSource.data;
-        // data.push(result.report!);
-        // this.dataSource.data = data;
+        this.load();
       }
     });
   }
@@ -191,6 +194,7 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().subscribe(async (result?: ReportEditDialogResult) => {
       if (result) {
+        this.load();
       }
     });
   }
@@ -215,20 +219,13 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
 
     let params: Partial<ReportParams> = {};
 
-    // if(filterFormValue.search) {
-    //   params.search = filterFormValue.search;
-    // }
-    //
-    // if(filterFormValue.isLowInStock) {
-    //   params.lowInStock = true;
-    // }
-    //
-    // if(sortValue.active) {
-    //   params.sortBy = sortValue.active;
-    //   params.sortDirection = sortValue.direction;
-    // }
-    //
-    // params.categories = filterFormValue.categories ?? [];
+    if (filterFormValue.search) {
+      params.search = filterFormValue.search;
+    }
+
+    if (filterFormValue.types) {
+      params.types = filterFormValue.types;
+    }
 
     this.dataSource.data = await this.reportService.getAll(params);
   }

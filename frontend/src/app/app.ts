@@ -2,13 +2,13 @@ import {
   ApplicationConfig,
   Component,
   importProvidersFrom,
+  inject,
   LOCALE_ID,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
   signal,
 } from '@angular/core';
-import { provideRouter, RouterOutlet, Routes } from '@angular/router';
-import { ScaffoldLayout } from './shared/scaffold.layout';
+import { provideRouter, RouterLink, RouterOutlet, Routes } from '@angular/router';
 import { ProductIndexPage } from './article/article.page';
 import { ArticleService } from './article/article.service';
 import { UnitMeasureService } from './unit-measure/unit-measure.service';
@@ -19,8 +19,42 @@ import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import localeBs from '@angular/common/locales/bs';
 import { registerLocaleData } from '@angular/common';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatToolbar } from '@angular/material/toolbar';
+import { MatButton } from '@angular/material/button';
+import { MatDivider } from '@angular/material/divider';
+import { MatDialog } from '@angular/material/dialog';
+import { UnitMeasureIndexDialog } from './unit-measure/index.dialog';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 
 registerLocaleData(localeBs);
+
+@Component({
+  imports: [MatToolbar, MatButton, RouterOutlet, MatDivider, RouterLink],
+  template: `
+    <mat-toolbar>
+      <span>Magacin</span>
+      <span class="flex-1 basis-auto"></span>
+      <button matButton [routerLink]="['/products']">Roba</button>
+      <button matButton [routerLink]="['/reports']">Izvještaji</button>
+      <button matButton (click)="openUnitMeasureDialog()">Mjerne jedinice</button>
+    </mat-toolbar>
+
+    <main class="w-full h-full overflow-hidden">
+      <mat-divider></mat-divider>
+      <router-outlet></router-outlet>
+    </main>
+  `,
+})
+class ScaffoldLayout {
+  readonly dialog = inject(MatDialog);
+
+  openUnitMeasureDialog() {
+    const dialogRef = this.dialog.open(UnitMeasureIndexDialog, {
+      width: '1200px',
+      height: '600px',
+    });
+  }
+}
 
 export const routes: Routes = [
   {
@@ -51,6 +85,12 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'bs-BA' },
     { provide: MAT_DATE_LOCALE, useValue: 'bs-BA' },
     importProvidersFrom(MatDatepickerModule, MatNativeDateModule),
+    {
+      provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
+      useValue: {
+        duration: 2000,
+      },
+    },
   ],
 };
 
