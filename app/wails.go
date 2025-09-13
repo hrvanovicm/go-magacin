@@ -32,6 +32,8 @@ func NewApp() *WailsApp {
 func (a *WailsApp) Startup(ctx context.Context) {
 	a.ctx = ctx
 
+	a.InitSetup()
+
 	dbPath := getDatabaseFullPath()
 	a.db = database.NewDB(dbPath)
 	if err := a.db.Connect(); err != nil {
@@ -64,7 +66,6 @@ func (a *WailsApp) Startup(ctx context.Context) {
 		a.logger = logger
 	}
 
-	a.InitSetup()
 	migrations.RunMigrations(a.db)
 }
 
@@ -130,9 +131,13 @@ func (a *WailsApp) InitSetup() {
 	dbPath := getDatabaseFullPath()
 
 	if _, err := os.Stat(dbPath); errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(filepath.Dir(dbPath), os.ModePerm); err != nil {
+			panic(err)
+		}
+
 		_, err := os.Create(dbPath)
 		if err != nil {
-			panic("cannot create a db file")
+			panic(err)
 		}
 	}
 }
@@ -140,7 +145,7 @@ func (a *WailsApp) InitSetup() {
 func getDatabaseFullPath() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		panic("could not get user home directory")
+		panic(err)
 	}
 
 	return filepath.Join(homeDir, "hrvanovicm", "magacin", "magacin.db")

@@ -150,7 +150,7 @@ func SaveArticles(ctx context.Context, tx *sqlx.Tx, rep *Report, reportArticles 
 	}
 
 	if len(usedIDs) == 0 {
-		query := `DELETE FROM report_has_articles WHERE report_id = $1`
+		query := `DELETE FROM report_has_articles WHERE report_id = ?`
 		if _, err := tx.ExecContext(ctx, query, rep.ID); err != nil {
 			return apperrors.NewSQLError(query, err)
 		}
@@ -205,18 +205,13 @@ func saveRecipes(ctx context.Context, tx *sqlx.Tx, reportId int64, articleId int
 		}
 	}
 
-	args := map[string]any{
-		"report_id":  reportId,
-		"article_id": articleId,
-	}
-
 	var query string
 	if len(usedIDs) == 0 {
 		query = `
 				DELETE FROM report_has_recipes
 				WHERE report_id = ? AND article_id = ?
 		`
-		if _, err := tx.ExecContext(ctx, query, args); err != nil {
+		if _, err := tx.ExecContext(ctx, query, reportId, articleId); err != nil {
 			return apperrors.NewSQLError(query, err)
 		}
 	} else {
@@ -225,14 +220,13 @@ func saveRecipes(ctx context.Context, tx *sqlx.Tx, reportId int64, articleId int
 				WHERE report_id = ? AND article_id = ? AND raw_material_id NOT IN (?)
 		`
 
-		args["raw_material_id"] = usedIDs
-		query, bindings, err := sqlx.In(query, args)
+		query, bindings, err := sqlx.In(query, reportId, articleId, usedIDs)
 		if err != nil {
 			return apperrors.NewSQLError(query, err)
 		}
 
 		query = tx.Rebind(query)
-		if _, err := tx.ExecContext(ctx, query, bindings); err != nil {
+		if _, err := tx.ExecContext(ctx, query, bindings...); err != nil {
 			return apperrors.NewSQLError(query, err)
 		}
 	}
@@ -242,7 +236,7 @@ func saveRecipes(ctx context.Context, tx *sqlx.Tx, reportId int64, articleId int
 
 // Delete
 func Delete(ctx context.Context, tx *sqlx.Tx, id int64) error {
-	query := `DELETE FROM reports WHERE id = $1`
+	query := `DELETE FROM reports WHERE id = ?`
 	if _, err := tx.ExecContext(ctx, query, id); err != nil {
 		return err
 	}
