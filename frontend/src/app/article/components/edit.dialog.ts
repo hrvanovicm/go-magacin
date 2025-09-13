@@ -42,7 +42,9 @@ export interface ArticleEditDialogResult {
 
 @Component({
   template: `
-    <h2 mat-dialog-title>{{ !data.article?.id ? 'Kreiraj robu' : data.article!.name }}</h2>
+    <h2 mat-dialog-title>
+      {{ !data?.article?.id ? 'Kreiraj robu' : data.article!.name }}
+    </h2>
     <mat-dialog-content class="mat-typography min-w-[420px] h-full overflow-hidden">
       <mat-tab-group class="h-full overflow-hidden">
         <mat-tab label="Osnovne informacije" class="h-full overflow-hidden">
@@ -321,7 +323,7 @@ export class ArticleEditDialog implements AfterContentInit {
         receptions: this.receptionDataSource.data,
       });
     } catch (error) {
-      this.snackbar.open(`❌ Došlo je do greške prilikom spremanja artikla ${article.name}!`);
+      this.snackbar.open(`❌ Došlo je do greške! ${error}`);
     }
   }
 

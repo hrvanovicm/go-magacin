@@ -65,68 +65,73 @@ import Report = report.Report;
       </mat-toolbar-row>
     </mat-toolbar>
 
-    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" matSort>
-      <ng-container matColumnDef="position">
-        <th mat-header-cell *matHeaderCellDef>Rb.</th>
-        <td mat-cell *matCellDef="let i = index">{{ i + 1 }}.</td>
-      </ng-container>
-      <ng-container matColumnDef="icon">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let element">
-          @if (element.type === ReportType.RECEIPT) {
-            <mat-icon class="text-xl text-gray-600">present_to_all</mat-icon>
-          } @else if (element.type === ReportType.SHIPMENT) {
-            <mat-icon class="text-xl text-gray-600">local_shipping</mat-icon>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="code">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Šifra</th>
-        <td mat-cell *matCellDef="let element">
-          <strong> {{ element.code }} </strong>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="company">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Kompanija</th>
-        <td mat-cell *matCellDef="let element">
-          @if (element.type === ReportType.RECEIPT) {
-            {{ element.receipt.supplierCompany.name }}
-            @if (element.receipt.supplierCompany.inHouseProduction) {
-              <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+    <div class="flex-1 min-h-0 overflow-auto">
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" matSort>
+        <ng-container matColumnDef="position">
+          <th mat-header-cell *matHeaderCellDef>Rb.</th>
+          <td mat-cell *matCellDef="let i = index">{{ i + 1 }}.</td>
+        </ng-container>
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef  mat-sort-header></th>
+          <td mat-cell *matCellDef="let element">
+            @if (element.type === ReportType.RECEIPT) {
+              <mat-icon class="text-xl text-gray-600">present_to_all</mat-icon>
+            } @else if (element.type === ReportType.SHIPMENT) {
+              <mat-icon class="text-xl text-gray-600">local_shipping</mat-icon>
             }
-          } @else if (element.type === ReportType.SHIPMENT) {
-            {{ element.shipment.receiptCompany.name }}
-            @if (element.shipment.receiptCompany.inHouseProduction) {
-              <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Šifra</th>
+          <td mat-cell *matCellDef="let element">
+            <strong> {{ element.code }} </strong>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="company">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Kompanija</th>
+          <td mat-cell *matCellDef="let element">
+            @if (element.type === ReportType.RECEIPT) {
+              {{ element.receipt.supplierCompany.name }}
+              @if (element.receipt.supplierCompany.inHouseProduction) {
+                <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+              }
+            } @else if (element.type === ReportType.SHIPMENT) {
+              {{ element.shipment.receiptCompany.name }}
+              @if (element.shipment.receiptCompany.inHouseProduction) {
+                <mat-chip class="ml-3"> Vlastita proizvodnja </mat-chip>
+              }
             }
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="signedOnDate">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Datum</th>
-        <td mat-cell *matCellDef="let element">
-          @if (element.signedAt) {
-            {{ element.signedAt | date: 'longDate' }}
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="locationOfPublish">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Lokacija</th>
-        <td mat-cell *matCellDef="let element">{{ element.signedAtLocation }}</td>
-      </ng-container>
-      <ng-container matColumnDef="signedByName">
-        <th mat-header-cell *matHeaderCellDef>Potpisao</th>
-        <td mat-cell *matCellDef="let element">{{ element.signedBy }}</td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: displayedColumns"
-        (click)="openUpdateDialog(row)"
-      ></tr>
-    </table>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="signedOnDate">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Datum</th>
+          <td mat-cell *matCellDef="let element">
+            @if (element.signedAt) {
+              {{ element.signedAt | date: 'longDate' }}
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="locationOfPublish">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Lokacija</th>
+          <td mat-cell *matCellDef="let element">{{ element.signedAtLocation }}</td>
+        </ng-container>
+        <ng-container matColumnDef="signedByName">
+          <th mat-header-cell *matHeaderCellDef>Potpisao</th>
+          <td mat-cell *matCellDef="let element">{{ element.signedBy }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          (click)="openUpdateDialog(row)"
+        ></tr>
+      </table>
+    </div>
   `,
   styles: `
+    :host {
+      @apply flex flex-col h-full w-full overflow-hidden;
+    }
     tr {
       cursor: pointer !important;
     }
@@ -143,7 +148,7 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
 
   readonly displayedColumns: string[] = [
     'position',
-    'icon',
+    'type',
     'code',
     'company',
     'signedOnDate',
@@ -178,7 +183,7 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().subscribe(async (result?: ReportEditDialogResult) => {
       if (result) {
-        this.load();
+        await this.load();
       }
     });
   }
@@ -200,11 +205,10 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
   }
 
   async reset() {
-    // this.filterForm.setValue({
-    //   search: null,
-    //   categories: ArticleCategoryValues,
-    //   isLowInStock: null
-    // })
+    this.filterForm.setValue({
+      search: null,
+      types: ReportTypeValues
+    })
 
     await this.load();
   }
@@ -225,6 +229,11 @@ export class ReportIndexPage implements OnInit, AfterViewInit {
 
     if (filterFormValue.types) {
       params.types = filterFormValue.types;
+    }
+
+    if (this.sort.active) {
+      params.sortBy = this.sort.active;
+      params.sortDirection = this.sort.direction ?? 'asc';
     }
 
     this.dataSource.data = await this.reportService.getAll(params);

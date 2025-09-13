@@ -117,6 +117,7 @@ import Article = article.Article;
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
         <tr
           mat-row
+          [class.low-stock-row]="row.inStockAmount <= row.inStockWarningAmount"
           *matRowDef="let row; columns: displayedColumns"
           (click)="openUpdateDialog(row)"
         ></tr>
@@ -125,11 +126,17 @@ import Article = article.Article;
   `,
   styles: `
     :root {
-      @apply h-full w-full overflow-hidden;
+      @apply flex flex-col h-full w-full overflow-hidden;
     }
+
+    .low-stock-row {
+      background-color: #fcd3d7; /* very subtle red background */
+    }
+
     tr {
       cursor: pointer !important;
     }
+
     tr:not(.example-expanded-row):hover {
       background: whitesmoke !important;
     }

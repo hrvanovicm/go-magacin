@@ -181,7 +181,7 @@ export class UnitMeasureAutocompleteComponent {
       <input
         matInput
         [formControl]="control"
-        [pattern]="isInteger() ? '^[0-9]*$' : '^[0-9]+([.,][0-9]{0,2})?$'"
+        [pattern]="'^-?[0-9]+([.,][0-9]{0,2})?$'"
         (keypress)="onKeyPress($event)"
         [disabled]="disabled"
         (blur)="onBlur($event)"
@@ -200,20 +200,16 @@ export class AmountInputComponent {
 
   @Output() onValueChange = new EventEmitter<number>();
 
-  isInteger = signal(false);
+  isInteger = signal(true);
 
   ngAfterViewInit() {
-    if (this.unitMeasure && this.unitMeasure.isInteger) {
-      this.isInteger.set(this.unitMeasure.isInteger);
-    }
-
     if (this.initValue !== undefined) {
       this.control.setValue(this.initValue.toFixed(2));
     }
   }
 
   onKeyPress(event: KeyboardEvent): boolean {
-    const pattern = this.isInteger() ? /[0-9]/ : /[0-9.,]/;
+    const pattern = /[0-9.,-]/
     const inputChar = String.fromCharCode(event.charCode);
 
     if (!pattern.test(inputChar)) {
@@ -328,7 +324,7 @@ export class TagsInputComponent implements AfterViewInit {
         (input)="filter()"
         (focus)="load()"
       />
-      <mat-autocomplete requireSelection #auto="matAutocomplete">
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="display">
         @for (option of filteredOptions(); track option) {
           <mat-option [value]="option.name">
             <span> {{ option.name }} </span>
@@ -355,7 +351,7 @@ export class CompanyAutocompleteComponent {
   readonly reportService = inject(ReportService);
 
   @Input() label!: string;
-  @Input() control!: FormControl<string>;
+  @Input() control!: FormControl<Company | string | null>;
 
   allOptions: Company[] = [];
 
@@ -367,6 +363,57 @@ export class CompanyAutocompleteComponent {
     }
 
     this.filter();
+  }
+
+  display(value: any) {
+    if (!value) {
+      return '';
+    }
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return value.name.charAt(0).toUpperCase() + value.name.slice(1).toLowerCase();
+  }
+
+  ngOnInit() {
+    this.control.valueChanges.subscribe((value: any) => {
+      if (typeof value === 'string') {
+        let exists = this.allOptions.find((o) => o.name?.toLowerCase() === value.toLowerCase());
+        if (exists) {
+          this.control.setValue(Company.createFrom({
+            name: exists.name,
+            inHouseProduction: exists.inHouseProduction
+          }));
+        } else {
+          this.control.setValue(Company.createFrom({
+            name: value.toLowerCase(),
+            inHouseProduction: false
+          }));
+        }
+      }
+    })
+  }
+
+  async ngAfterContentInit() {
+    await this.load()
+
+    if (this.control.value && typeof this.control.value === "string" && this.control.value.length > 0) {
+      let value = this.control.value as String;
+      let exists = this.allOptions.find((o) => o.name?.toLowerCase() === value.toLowerCase());
+      if (exists) {
+        this.control.setValue(Company.createFrom({
+          name: exists.name,
+          inHouseProduction: exists.inHouseProduction
+        }));
+      } else {
+        this.control.setValue(Company.createFrom({
+          name: value,
+          inHouseProduction: false
+        }));
+      }
+    }
   }
 
   filter(): void {

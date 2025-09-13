@@ -31,7 +31,7 @@ registerLocaleData(localeBs);
 @Component({
   imports: [MatToolbar, MatButton, RouterOutlet, MatDivider, RouterLink],
   template: `
-    <mat-toolbar>
+    <mat-toolbar class="shrink-0">
       <span>Magacin</span>
       <span class="flex-1 basis-auto"></span>
       <button matButton [routerLink]="['/products']">Roba</button>
@@ -39,11 +39,16 @@ registerLocaleData(localeBs);
       <button matButton (click)="openUnitMeasureDialog()">Mjerne jedinice</button>
     </mat-toolbar>
 
-    <main class="w-full h-full overflow-hidden">
+    <main class="flex flex-1 min-h-0 w-full overflow-hidden flex-col">
       <mat-divider></mat-divider>
       <router-outlet></router-outlet>
     </main>
   `,
+  styles: `
+    :host {
+      @apply flex flex-col h-full w-full overflow-hidden;
+    }
+  `
 })
 class ScaffoldLayout {
   readonly dialog = inject(MatDialog);
@@ -97,7 +102,11 @@ export const appConfig: ApplicationConfig = {
 @Component({
   selector: 'app-root',
   template: ` <router-outlet></router-outlet> `,
-  styles: [],
+  styles: `
+    :host {
+      @apply flex flex-col h-full w-full overflow-hidden;
+    }
+  `,
   imports: [RouterOutlet],
 })
 export class App {}

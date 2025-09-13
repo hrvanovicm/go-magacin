@@ -65,11 +65,19 @@ export class ReportService {
         let compareValue: number;
 
         switch (sortField) {
-          case 'name':
+          case 'code':
             compareValue = a.code?.localeCompare(b.code ?? '') ?? 0;
+            break;
+          case 'company':
+            const aCompany = a.type === ReportType.RECEIPT ? a.receipt.supplierCompany.name : a.shipment.receiptCompany.name;
+            const bCompany = b.type === ReportType.RECEIPT ? b.receipt.supplierCompany.name : b.shipment.receiptCompany.name;
+            compareValue = aCompany?.localeCompare(bCompany ?? '') ?? 0;
             break;
           case 'signedOnDate':
             compareValue = (a.signedAt ?? '').localeCompare(b.signedAt ?? '');
+            break;
+          case 'locationOfPublish':
+            compareValue = (a.signedAtLocation ?? '').localeCompare(b.signedAtLocation ?? '');
             break;
           case 'type':
             compareValue = a.type.localeCompare(b.type);

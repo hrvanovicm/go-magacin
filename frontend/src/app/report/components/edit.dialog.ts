@@ -303,6 +303,13 @@ export interface ReportEditDialogResult {
     UserAutocompleteComponent,
   ],
   styles: `
+    tr {
+      cursor: pointer !important;
+    }
+    tr:not(.example-expanded-row):hover {
+      background: whitesmoke !important;
+    }
+
     table {
       width: 100%;
     }
@@ -370,8 +377,8 @@ export class ReportEditDialog implements AfterContentInit {
   readonly form = new FormGroup({
     type: new FormControl<ReportType | null>(null, [Validators.required]),
     code: new FormControl<string>(''),
-    receiptCompany: new FormControl<string>(''),
-    supplierCompany: new FormControl<string>(''),
+    receiptCompany: new FormControl<string | Company | null>(''),
+    supplierCompany: new FormControl<string | Company | null>(''),
     supplierReportCode: new FormControl<string>(''),
     signedAt: new FormControl<string>(''),
     signedAtLocation: new FormControl<string>(''),
@@ -551,7 +558,6 @@ export class ReportEditDialog implements AfterContentInit {
     this.articleDataSource.data = this.articleDataSource.data.map((r) => {
       if (r.article.id == article.id) {
         r.amount = amount;
-        console.log('updating');
       }
       return r;
     });
@@ -588,6 +594,7 @@ export class ReportEditDialog implements AfterContentInit {
 
   async save() {
     let report = await this.toRecipe();
+
     let articles = this.articleDataSource.data.map((a) => {
       if (report.type != ReportType.RECEIPT || !report.receipt.supplierCompany.inHouseProduction) {
         a.usedRecipes = [];
@@ -603,12 +610,11 @@ export class ReportEditDialog implements AfterContentInit {
         articles: articles,
       });
     } catch (error) {
-      this.snackbar.open(`❌ Došlo je do greške prilikom spremanja izvještaja!`);
+      this.snackbar.open(`❌ Došlo je do greške! ${error}`);
     }
   }
 
   async toRecipe() {
-    let companies = await this.reportService.getAllCompanies();
     let formValue = this.form.value;
     console.log(formValue);
 
@@ -622,13 +628,13 @@ export class ReportEditDialog implements AfterContentInit {
       signedBy: (formValue.signedBy?.length ?? 0) > 0 ? formValue.signedBy : undefined,
       receipt: {
         supplierCompany:
-          companies.find((company) => company.name == formValue.supplierCompany) ?? undefined,
+          formValue.supplierCompany instanceof Company ? formValue.supplierCompany : undefined,
         supplierReportCode:
           formValue.supplierReportCode != '' ? formValue.supplierReportCode : undefined,
       },
       shipment: {
         receiptCompany:
-          companies.find((company) => company.name == formValue.receiptCompany) ?? undefined,
+          formValue.receiptCompany instanceof Company ? formValue.receiptCompany : undefined,
       },
     });
   }
