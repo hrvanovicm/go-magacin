@@ -101,7 +101,6 @@ export namespace company {
 export namespace report {
 	
 	export class Receipt {
-	    isSupplierProducton?: boolean;
 	    supplierCompany: company.Company;
 	    supplierReportCode?: string;
 	
@@ -111,7 +110,6 @@ export namespace report {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.isSupplierProducton = source["isSupplierProducton"];
 	        this.supplierCompany = this.convertValues(source["supplierCompany"], company.Company);
 	        this.supplierReportCode = source["supplierReportCode"];
 	    }

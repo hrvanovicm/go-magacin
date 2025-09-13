@@ -10,5 +10,8 @@
   "Author": {
     "name": "Mirza Hrvanović",
     "email": "hrvanovicmirza64@gmail.com"
+  },
+  "info": {
+    "icon": "build/appicon.png"
   }
 }
